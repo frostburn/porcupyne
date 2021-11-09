@@ -1,6 +1,7 @@
 """
 Parsing tools for turning strings into 5-limit pitch vectors
 """
+from fractions import Fraction
 from numpy import array
 
 LYDIAN = ("F", "C", "G", "D", "A", "E", "B")
@@ -321,3 +322,74 @@ CHORDS_5LIMIT = {
     "HexVisor": ("P1", "P5", "m7u", "d12u2"),
     "HexSnake": ("P1", "M3d", "d8u2", "m10u"),
 }
+
+
+def parse(text, initial_pitch=(0, 0, 0), extra_intervals=None, extra_chords=None):
+    """
+    Parse a string of intervals separated by whitespace into vectors with time and duration tags
+
+    Examples:
+    >>> parse("P1 M2 M2d m2u M2 M2d M2 m2u")  # Major scale
+
+    >>> parse("M2(m7) P4(dom) -P5(M7)")  # Jazzy ii-V-I progression
+
+    >>> parse("P1[3/2] P1[3/2] P1 Z P1 P1 Z "*2)  # Son clave
+    """
+    #pylint: disable=invalid-name
+    def _parse_interval(token):
+        direction = -1 if token[0] == "-" else 1
+        token = token.lstrip("+-")
+        if extra_intervals is not None and token in extra_intervals:
+            return direction * array(extra_intervals[token])
+        return direction * parse_interval(token)
+
+    def _parse_chord(token):
+        if extra_chords is not None and token in extra_chords:
+            return extra_chords[token]
+        return CHORDS_5LIMIT[token]
+
+    result = []
+    pitch = array(initial_pitch)
+    t = Fraction(0)
+    for token in text.strip().split():
+        chord_token = "U"
+        inversion_token = "0"
+        duration_token = "1"
+
+        if "(" in token:
+            interval_token, token = token.split("(", 1)
+            chord_token, token = token.split(")", 1)
+            if "_" in chord_token:
+                chord_token, inversion_token = chord_token.split("_", 1)
+        elif "[" in token:
+            interval_token, token = token.split("[")
+        else:
+            interval_token = token
+            token = ""
+        if "]" in token:
+            duration_token, token = token.lstrip("[").split("]")
+
+        if token:
+            raise ValueError("Failed to fully parse token")
+
+        duration = Fraction(duration_token)
+
+        if interval_token != "Z":
+            interval = _parse_interval(interval_token)
+
+            chord = [_parse_interval(chord_tone) for chord_tone in _parse_chord(chord_token)]
+
+            inversion = int(inversion_token)
+            for i in range(inversion):
+                chord[i] += array([1, 0, 0])
+            if inversion:
+                for i in range(len(chord)):  #pylint: disable=consider-using-enumerate
+                    chord[i] -= array([1, 0, 0])
+
+            pitch = pitch + interval
+
+            result.append(([pitch + chord_tone for chord_tone in chord], t, duration))
+
+        t += duration
+
+    return result

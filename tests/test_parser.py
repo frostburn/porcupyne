@@ -1,5 +1,5 @@
 from numpy import array, dot
-from parser import parse_pitch, parse_interval
+from parser_5limit import parse_pitch, parse_interval
 
 
 def test_parse_pitch():
