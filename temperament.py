@@ -2,7 +2,8 @@
 """
 Tools for tempering out commas from musical tunings, particularly 5-limit just intonation.
 """
-
+from collections import defaultdict
+from fractions import Fraction
 from functools import reduce
 from itertools import combinations
 from numpy import log, dot, array, cross, absolute, sign
@@ -10,7 +11,7 @@ from numpy.linalg import norm
 from util import gcd
 
 JI_5LIMIT = log(array([2, 3, 5]))
-EPSILON = 1e-12
+JI_ISLAND = log(array([2, 3, 13/5]))
 
 COMMA_BY_HOROGRAM = {
     # Exotemperaments
@@ -292,3 +293,44 @@ def canonize(threes, fives, horogram="JI"):
         return (threes + 2*(fives-m), m)
 
     return (threes, fives)
+
+
+def find_subset_commas(max_complexity, factors, threshold=Fraction(10, 9), manhattan=False):
+    """
+    Find intervals smaller than a given threshold between factors less complex than the given limit
+    """
+    factors = [Fraction(f) for f in factors]
+    result = []
+    def search(num_remaining, exponents):
+        if manhattan and absolute(exponents[1:]).sum() > max_complexity:  # Assumes factors[0] is the period
+            return
+        if num_remaining:
+            for exponent in range(-max_complexity, max_complexity+1):
+                search(num_remaining - 1, exponents + [exponent])
+        else:
+            if reduce(gcd, exponents) not in (-1, 1):
+                return
+            comma = Fraction(1)
+            for factor, exponent in zip(factors, exponents):
+                comma *= factor**exponent
+            if 1 < comma < threshold:
+                result.append((comma, array(exponents)))
+    search(len(factors), [])
+    return result
+
+
+def tabulate_meets(commas):
+    """
+    Tabulate rank 1 meets between commas
+    """
+    meets_by_edo = defaultdict(list)
+    for i, comma_a in enumerate(commas):
+        if len(comma_a) != 3:
+            raise NotImplementedError("Only rank 3 to rank 1 reduction supported")
+        for comma_b in commas[i+1:]:
+            mapping = cross(comma_a, comma_b)
+            if mapping[0] < 0:
+                mapping = -mapping
+            mapping //= reduce(gcd, mapping)
+            meets_by_edo[mapping[0]].append((mapping, comma_a, comma_b))
+    return meets_by_edo
