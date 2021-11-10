@@ -292,7 +292,40 @@ def canonize(threes, fives, horogram="JI"):
         m = fives - ((fives + 3)//6)*6
         return (threes + 2*(fives-m), m)
 
-    return (threes, fives)
+    if horogram == "JI":
+        return (threes, fives)
+
+    raise ValueError("Unrecognized temperament")
+
+
+def mod_comma(pitch, comma):
+    """
+    Calculate pitch modulo comma
+
+    Result not canonized, but unique
+    """
+    pitch = array(pitch)
+    comma = array(comma)
+
+    if comma[-1] == 0:
+        if comma[-2] == 0:
+            raise NotImplementedError("Generic reduction not implemented")
+        if comma[-2] < 0:
+            comma = -comma
+        while pitch[-2] > 0:
+            pitch -= comma
+        while pitch[-2] < 0:
+            pitch += comma
+    else:
+        if comma[-1] < 0:
+            comma = -comma
+
+        while pitch[-1] > 0:
+            pitch -= comma
+        while pitch[-1] < 0:
+            pitch += comma
+
+    return pitch
 
 
 def find_subset_commas(max_complexity, factors, threshold=Fraction(10, 9), manhattan=False):
