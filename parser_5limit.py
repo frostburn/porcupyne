@@ -207,6 +207,8 @@ CHORDS_5LIMIT = {
     "aug7": ("P1", "M3d", "A5d2", "m7u"),
     "augdom": ("P1", "M3d", "A5d2", "m7"),
 
+    "M7+": ("P1", "M3d", "A5d2", "M7d"),
+
     "M7+6add2": ("P1", "M2", "M3d", "P5", "A5d2", "M6", "M7d"),
     "M7+6add2#4": ("P1", "M2", "M3d", "P5", "A5d2", "M6", "M7d", "A4d"),
 
@@ -301,7 +303,7 @@ CHORDS_5LIMIT = {
     "TetrisJ#12": ("P1", "M3d", "P5", "A12d2"),
 
     "TetrisT": ("P1", "M3d", "A5d2", "M6d"),
-    "TetrisT+7": ("P1", "M3d", "A5d2", "M7d"),
+    "TetrisT+7": ("P1", "M3d", "A5d2", "M7d"),  # Same as M7+
     "TetrisTsus7": ("P1", "M2", "P5", "M7d"),
     "TetrisTadd4": ("P1", "M3d", "P4", "P5"),  # Same as add4
     "TetrisTmadd2": ("P1", "M2", "m3u", "P5"),  # Same as madd2

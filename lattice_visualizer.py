@@ -1,4 +1,6 @@
-from pylab import *
+# pylint: disable=invalid-name, missing-function-docstring
+from numpy import logical_and, logical_or, logical_xor, sqrt, stack, clip, maximum, sign, floor, linspace, meshgrid
+from numpy.random import random
 
 
 def make_picture_frame(rgb, dither=1.0/256.0):
@@ -37,15 +39,15 @@ def letter_E(x, y, thickness=0.1):
     for offset in range(-1, 2):
         result = logical_or(
             result,
-            logical_and(abs(2*x - 1)<1, abs(y + offset) < thickness)
+            logical_and(abs(2*x - 1) < 1, abs(y + offset) < thickness)
         )
     return result
 
 
 def letter_F(x, y, thickness=0.1):
     result = logical_and(abs(y) < 1+thickness, abs(x) < thickness)
-    result = logical_or(result, logical_and(abs(2*x-1)<1, abs(y-1) < thickness))
-    result = logical_or(result, logical_and(abs(2.2*x-1)<1, abs(y) < thickness))
+    result = logical_or(result, logical_and(abs(2*x-1) < 1, abs(y-1) < thickness))
+    result = logical_or(result, logical_and(abs(2.2*x-1) < 1, abs(y) < thickness))
     return result
 
 
@@ -79,7 +81,7 @@ def letter_M(x, y, thickness=0.1):
 
 
 def arrow(x, y):
-    return logical_and(y < 0, maximum(2*x-y,-2*x-y) < 1)
+    return logical_and(y < 0, maximum(2*x-y, -2*x-y) < 1)
 
 
 def natural(x, y, arrows=0, thickness=0.1):
@@ -315,63 +317,42 @@ def hex_highlight(x, y, threes, fives, spacing=0.2):
     return hexagon((x - loc_x)*(1-0.2*spacing), (y - loc_y)*(1-0.2*spacing))
 
 
-if __name__ == "__main__":
-    from temperament import canonize, COMMA_BY_HOROGRAM
+RESOLUTIONS = {
+    "2160p": (3840, 2160),
+    "1440p": (2560, 1440),
+    "1080p": (1920, 1080),
+    "720p": (1280, 720),
+    "480p": (854, 480),
+    "360p": (640, 360),
+    "240p": (426, 240),
+    "160p": (284, 160),
+    "80p": (142, 80),
+    "40p": (71, 40),
+}
 
-    # meantone = lambda t, f: canonize(t, f, "meantone")
-    horogram = "augmented"
-    edo = 3
-    comma = COMMA_BY_HOROGRAM[horogram]
-    temperament = lambda t, f: canonize(t, f, horogram)
 
-    N = 15
-    H = 1080*2
-    W = 1920*2
-    aspect = W / H
-    x = linspace(-N*aspect, N*aspect, W)
-    y = linspace(N, -N, H)
+# TODO: Anti-aliasing
+def visualize_progression(resolution, x0, y0, scale, notess, temperament=None, comma=None):
+    width, height = RESOLUTIONS[resolution]
+    aspect = width / height
+    x = linspace(-scale*aspect, scale*aspect, width) + x0
+    y = linspace(scale, -scale, height) + y0
 
     x, y = meshgrid(x, y)
 
-    if False:
-        grid = hex_grid(x, y)*1.0
+    grid = hex_grid(x, y, temperament=temperament)*1.0
+    for notes in notess:
         highlights = 0*x
-        highlights_neg = 0*x
-        for comma in COMMA_BY_HOROGRAM.values():
-            highlights += hex_highlight(x, y, comma[1], comma[2])
-            highlights_neg += hex_highlight(x, y, -comma[1], -comma[2])
-        image = [grid - highlights, grid - highlights_neg, grid - hex_highlight(x, y, 0, 0)]
+        root_highlights = 0*x
+        if comma is None:
+            for note in notes:
+                highlights += hex_highlight(x, y, note.pitch[1], note.pitch[2])
+            root_highlights = hex_highlight(x, y, notes[0].pitch[1], notes[0].pitch[2])
+        else:
+            for k in range(-6, 7):
+                for note in notes:
+                    highlights += hex_highlight(x, y, note.pitch[1] + k*comma[1], note.pitch[2] + k*comma[2])
+                root_highlights += hex_highlight(x, y, notes[0].pitch[1] + k*comma[1], notes[0].pitch[2] + k*comma[2])
 
-    if False:
-        grid = hex_grid(x, y)
-        image = [grid, grid, grid]
-
-    if True:
-        grid = hex_grid(x, y, temperament=temperament)*1.0
-        highlight_P1 = 0*x
-        highlight_M3 = 0*x
-        highlight_P5 = 0*x
-        highlight_G = 0*x
-        for k in range(-4, 5):
-            c = k*array(comma)
-            highlight_P1 += hex_highlight(x, y, c[1], c[2])
-            highlight_M3 += hex_highlight(x, y, c[1], c[2]+1)
-            highlight_P5 += hex_highlight(x, y, c[1]+1, c[2])
-            highlight_G += hex_highlight(x, y, c[1]-2, c[2]+1)
-        highlight_G *= 0
-        image = [grid - highlight_P1 - highlight_G, grid - highlight_M3, grid - highlight_P5 - highlight_G]
-
-    if False:
-        grid = square_grid(x, y, temperament=temperament)*1.0
-        highlights = 0*x
-        for i in range(-20, 20):
-            for j in range(edo):
-                for k in range(-10, 11):
-                    highlights = logical_or(highlights, square_highlight(x, y, i + j*2 + k*comma[1], j + k*comma[2]))
-        image = [grid, grid - highlights, grid]
-
-    # image = [letter_C(x, y), letter_M(x, y), letter_A(x, y)]
-
-    fname = "/tmp/out.png"
-    print("Saving", fname)
-    imsave(fname, make_picture_frame(image))
+        image = [grid - highlights, grid - highlights*0.1, grid - root_highlights]
+        yield image
