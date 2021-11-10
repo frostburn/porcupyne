@@ -7,6 +7,7 @@ max-locals = 25
 max-branches = 30
 max-returns = 30
 max-statements = 100
+max-attributes = 10
 
 [ELIF]
 max-nested-blocks=10

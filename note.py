@@ -11,10 +11,10 @@ class PitchContext:
     Defines how pitch vectors are interpreted as frequencies
     """
 
-    def __init__(self, mapping, base_frequency=440, comma=None):
+    def __init__(self, mapping, comma=None, base_frequency=440):
         self.mapping = mapping
-        self.base_frequency = base_frequency
         self.comma = comma
+        self.base_frequency = base_frequency
 
     def pitch_to_freq(self, vector):
         return exp(dot(self.mapping, vector)) * self.base_frequency
@@ -31,13 +31,13 @@ class PitchContext:
         """
         Return a copy of the pitch context tuned up by a pure octave
         """
-        return self.__class__(self.mapping, self.base_frequency*2)
+        return self.__class__(self.mapping, self.comma, self.base_frequency*2)
 
     def bass(self):
         """
         Return a copy of the pitch context tuned down by a pure octave
         """
-        return self.__class__(self.mapping, self.base_frequency/2)
+        return self.__class__(self.mapping, self.comma, self.base_frequency/2)
 
 
 DEFAULT_PITCH_CONTEXT = PitchContext(JI_5LIMIT)
@@ -78,3 +78,6 @@ class Note:
 
     def __eq__(self, other):
         return self.context.equals(self.pitch, other.pitch)
+
+    def __repr__(self):
+        return "{}({}, {}, {})".format(self.__class__.__name__, tuple(self.pitch), self.duration, self.time)

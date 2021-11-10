@@ -27,7 +27,7 @@ def softsaw(phase, sharpness):
 
 def ping(freq, carrier_index=1, modulation_index=2, decay=0.4, sharpness1=0.99, sharpness2=1.2, separation=6):
     """
-    Decent FM string or bell depending on the modulation indices.
+    Decent FM string pluck or bell depending on the modulation indices.
     """
     dur = -log(EPSILON) / decay
     t = trange(dur)
@@ -87,7 +87,7 @@ def merge(*samples):
     """
     length = 0
     for sample, location in samples:
-        length = max(length, len(sample) + location * SAMPLE_RATE)
+        length = max(length, len(sample) + float(location) * SAMPLE_RATE)
     x = zeros(int(ceil(length)))
     for sample, location in samples:
         loc = int(location * SAMPLE_RATE)

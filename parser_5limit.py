@@ -329,7 +329,7 @@ CHORDS_5LIMIT = {
 }
 
 
-def parse(text, initial_pitch=(0, 0, 0), extra_intervals=None, extra_chords=None, pitch_context=None):
+def parse(text, beat_duration=Fraction(1), initial_pitch=(0, 0, 0), extra_intervals=None, extra_chords=None, pitch_context=None):
     """
     Parse a string of intervals separated by whitespace into Note instances
 
@@ -352,6 +352,8 @@ def parse(text, initial_pitch=(0, 0, 0), extra_intervals=None, extra_chords=None
         if extra_chords is not None and token in extra_chords:
             return extra_chords[token]
         return CHORDS_5LIMIT[token]
+
+    beat_duration = Fraction(beat_duration)
 
     result = []
     pitch = array(initial_pitch)
@@ -377,7 +379,7 @@ def parse(text, initial_pitch=(0, 0, 0), extra_intervals=None, extra_chords=None
         if token:
             raise ValueError("Failed to fully parse token")
 
-        duration = Fraction(duration_token)
+        duration = Fraction(duration_token) * beat_duration
 
         if interval_token != "Z":
             interval = _parse_interval(interval_token)
