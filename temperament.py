@@ -328,6 +328,9 @@ def mod_comma(pitch, comma):
     return pitch
 
 
+# TODO: mod_comma_list
+
+
 def find_subset_commas(max_complexity, factors, threshold=Fraction(10, 9), manhattan=False):
     """
     Find intervals smaller than a given threshold between factors less complex than the given limit

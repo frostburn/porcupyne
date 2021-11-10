@@ -2,7 +2,6 @@
 import sys
 from pylab import *
 from audio import *
-from temperament import JI_5LIMIT
 from parser_5limit import parse
 
 
@@ -23,47 +22,40 @@ def main(filename):
     +A1d[4] -M2[7/2] +P4[17/2] -M3d[3] +P1[5]
     """
 
-    melody_pitches = []
     melody = parse(melody)
-    for x in melody:
-        melody_pitches.append(x[0][0])
-
-    mapping = JI_5LIMIT
 
     # Move chord tones under the melody
-    progression = []
-    for pitch, x in zip(melody_pitches, parse(chord_progression)):
-        tones = []
-        for tone in x[0]:
-            tone = array(tone)
-            while dot(tone, mapping) > dot(pitch, mapping):
-                tone -= array([1, 0, 0])
-            while dot(tone, mapping) < dot(pitch - array([1, 0, 0]), mapping):
-                tone += array([1, 0, 0])
-            tones.append(tone)
-        progression.append((tones, x[1], x[2]))
-
+    progression = parse(chord_progression)
+    for melody_notes, notes in zip(melody, progression):
+        melody_note = melody_notes[0]
+        for note in notes:
+            note.pitch = array(note.pitch)
+            while note < melody_note:
+                note.pitch += array([1, 0, 0])
+            while note > melody_note:
+                note.pitch -= array([1, 0, 0])
 
     result = empty()
 
-    for x in melody:
-        freq = 600 * exp(dot(x[0][0], mapping))
-        dur = float(x[2]/8)
+    for notes in melody:
+        note = notes[0]
+        freq = 1.5 * note.freq
+        dur = float(note.duration/8)
         t = trange(dur)
         signal = tanh(100*t)*tanh(10*(dur-t))*softsaw(freq*t, 0.25+exp(-15*t)*0.6)
         signal = [signal]*2
-        result = merge_stereo((result, 0), (signal, float(x[1]/8)))
+        result = merge_stereo((result, 0), (signal, float(note.time/8)))
 
-    for x in progression:
+    for notes in progression:
         chord = empty()
-        for tone in x[0]:
-            freq = 600 * exp(dot(tone, mapping))
-            dur = float(x[2]/2)
+        for note in notes:
+            freq = 1.5 * note.freq
+            dur = float(note.duration/2)
             t = trange(dur)
             signal = tanh(50*t)*tanh(10*(dur-t))*softsaw(freq*t, 0.2+exp(-5*t)*0.5)
             signal = [signal]*2
             chord = merge_stereo((chord, 0), (signal, 0))
-        result = merge_stereo((result, 0), (chord*0.5, float(x[1]/2)))
+        result = merge_stereo((result, 0), (chord*0.5, float(note.time/2)))
 
 
     if not filename.endswith(".wav"):

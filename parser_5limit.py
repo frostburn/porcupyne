@@ -3,6 +3,7 @@ Parsing tools for turning strings into 5-limit pitch vectors
 """
 from fractions import Fraction
 from numpy import array
+from note import Note
 
 LYDIAN = ("F", "C", "G", "D", "A", "E", "B")
 
@@ -328,9 +329,9 @@ CHORDS_5LIMIT = {
 }
 
 
-def parse(text, initial_pitch=(0, 0, 0), extra_intervals=None, extra_chords=None):
+def parse(text, initial_pitch=(0, 0, 0), extra_intervals=None, extra_chords=None, pitch_context=None):
     """
-    Parse a string of intervals separated by whitespace into vectors with time and duration tags
+    Parse a string of intervals separated by whitespace into Note instances
 
     Examples:
     >>> parse("P1 M2 M2d m2u M2 M2d M2 m2u")  # Major scale
@@ -392,7 +393,7 @@ def parse(text, initial_pitch=(0, 0, 0), extra_intervals=None, extra_chords=None
 
             pitch = pitch + interval
 
-            result.append(([pitch + chord_tone for chord_tone in chord], t, duration))
+            result.append([Note(pitch + chord_tone, duration, t, context=pitch_context) for chord_tone in chord])
 
         t += duration
 
