@@ -1,5 +1,5 @@
 # pylint: disable=invalid-name, missing-function-docstring
-from numpy import logical_and, logical_or, logical_xor, sqrt, stack, clip, maximum, sign, floor, linspace, meshgrid
+from numpy import logical_and, logical_or, logical_xor, sqrt, stack, clip, maximum, sign, floor, linspace, meshgrid, minimum
 from numpy.random import random
 
 
@@ -18,11 +18,119 @@ def hexagon(x, y):
     return logical_and(abs(y) < 1, abs(abs(x)*SQ3 + abs(y)) < 2)
 
 
+def digit_0(x, y, thickness=0.1):
+    r = sqrt(2*x*x + y*y)
+    return abs(r - 1) < thickness
+
+
+def digit_1(x, y, thickness=0.1):
+    return logical_and(
+        logical_and(x < thickness, abs(y) < 1 + thickness),
+        logical_or(
+            -x < thickness,
+            logical_and(y-x < 1 + 2*thickness, y > 1-thickness)
+        )
+    )
+
+
+def _digit_2(x, y, thickness):
+    r = sqrt(x*x + y*y)
+    return logical_or(
+        logical_and(maximum(x+y, x + 2*y) > 0, abs(r - 1) < thickness),
+        logical_and(
+            logical_and(abs(x) < 1 + thickness, y > -2.5-thickness),
+            logical_or(
+                y < -2.5 + thickness,
+                logical_and(x+y <= 0, abs(x-y-sqrt(2)) < sqrt(2)*thickness)
+            )
+        )
+    )
+
+def digit_2(x, y, thickness=0.1):
+    return _digit_2(x*1.75, (y-0.425)*1.75, thickness*1.75)
+
+
+def _digit_3(x, y, thickness):
+    r = sqrt(x*x + (abs(y)-1)**2)
+    return logical_and(
+        logical_or(x + abs(y) > 0.5, x > -0.15),
+        abs(r - 1) < thickness,
+    )
+
+
+def digit_3(x, y, thickness=0.1):
+    return _digit_3(x*2, y*2, thickness*2)
+
+
+def digit_4(x, y, thickness=0.1):
+    return logical_and(
+        logical_and(abs(y) < 1 + thickness, abs(x+0.25+thickness) < 0.75+thickness),
+        logical_or(
+            minimum(abs(x), abs(y+thickness)) < thickness,
+            abs(x-y+1+thickness) < thickness,
+        )
+    )
+
+
+def _digit_5(x, y, thickness):
+    r = sqrt(x*x + y*y)
+    result = logical_or(
+        logical_and(abs(r - 1) < thickness, logical_or(x > 0, 3*x - 2*y > 0)),
+        logical_and(
+            abs(maximum(0.5+thickness-x, y-1)-1) < thickness,
+            maximum(x-1-thickness, 1-thickness-y) < 0
+        )
+    )
+    return logical_or(
+        result,
+        logical_and(
+            logical_and(x < 0, x > -0.5), abs(y-1) < thickness
+        )
+    )
+
+
+def digit_5(x, y, thickness=0.1):
+    return _digit_5(1.5*x, 1.5*(y+0.333333), 1.5*thickness)
+
+
+def _digit_6(x, y, thickness):
+    r = sqrt(x*x + y*y)
+    return logical_or(
+        logical_and(abs(2*x - y + sqrt(5)) < sqrt(5)*thickness, abs(2*y + x - 1.75*sqrt(5)) < 3.5),
+        abs(r-1) < thickness
+    )
+
+
+def digit_6(x, y, thickness=0.1):
+    return _digit_6(2*x, 2*(y+0.5), 2*thickness)
+
+
+def digit_7(x, y, thickness=0.1):
+    result = logical_and(
+        abs(x-thickness) < 0.75 + thickness,
+        logical_or(y > 1 - thickness, abs(2*x - y - 0.75) < sqrt(5)*thickness)
+    )
+    return logical_and(result, abs(y) < 1 + thickness)
+
+
+def _digit_8(x, y, thickness):
+    r = sqrt(x*x + (abs(y)-1)**2)
+    return abs(r - 1) < thickness
+
+
+def digit_8(x, y, thickness=0.1):
+    return _digit_8(x*2, y*2, thickness*2)
+
+
+def digit_9(x, y, thickness=0.1):
+    return digit_6(-x, -y, thickness)
+
+
 def letter_C(x, y, thickness=0.1):
     r = sqrt(x*x + y*y)
     return logical_and(
         abs(r - 1) < thickness,
-        logical_or(x+y < 0, x-y < 0)
+        x - abs(y) < 0,
     )
 
 
@@ -53,7 +161,7 @@ def letter_F(x, y, thickness=0.1):
 
 def letter_G(x, y, thickness=0.1):
     r = sqrt(x*x + y*y)
-    result = logical_and(abs(r - 1) < thickness, logical_or(2*x+y < 0, 2*x-y < 0))
+    result = logical_and(abs(r - 1) < thickness, 2*x - abs(y) < 0)
     result = logical_or(result, logical_and(r < 1 + thickness, logical_and(abs(x-0.5) < thickness, y < 0)))
     result = logical_or(result, logical_and(abs(x-0.25) < 0.25+thickness, abs(y) < thickness))
     return result
@@ -160,6 +268,20 @@ LETTER_OFFSETS = {
     "F": -0.1,
     "G": 0.1,
     "A": -0.1,
+}
+
+
+DIGITS = {
+    "0": digit_0,
+    "1": digit_1,
+    "2": digit_2,
+    "3": digit_3,
+    "4": digit_4,
+    "5": digit_5,
+    "6": digit_6,
+    "7": digit_7,
+    "8": digit_8,
+    "9": digit_9,
 }
 
 
