@@ -285,27 +285,22 @@ DIGITS = {
 }
 
 
-def note_symbol(x, y, letter, sharps=0, arrows=0, thickness=0.1):
+def accidental_symbol(x, y, sharps, arrows, thickness):
     bg = 0*x
 
-    # TODO: Further improve the bounds a little bit
-    if sharps > 2:
-        x_offset = 0.4*((sharps+1)//2)
-    elif sharps < 0:
-        x_offset = 0.2*(-sharps-1)
-    else:
-        x_offset = 0
-
     if sharps > 0:
-        accidental_space = 1.75 + 1.5 * ((sharps+1)//2 - 1)
+        accidental_space = 0.75 + 1.5 * ((sharps+1)//2 - 1)
     elif sharps < 0:
-        accidental_space = 1.25 + 0.75 * (-1-sharps)
+        accidental_space = 0.25 + 0.75 * (-1-sharps)
     else:
-        accidental_space = 1.25
+        accidental_space = 0.4
 
-    x_min = -1 - x_offset - thickness
-    x_max = 1 - x_offset + thickness + accidental_space
-    y_min = -1.3 - thickness - max(0, -0.3*arrows)
+    x_min = -0.1 - thickness
+    x_max = 0.75 + thickness + accidental_space
+    if sharps < 0 and arrows < 0:
+        y_min = -1.5 - thickness - max(0, -0.3*arrows)
+    else:
+        y_min = -1.3 - thickness - max(0, -0.3*arrows)
     y_max = 1.3 + thickness + max(0, 0.3*arrows)
 
     # TODO: Use index slices when the coordinates are orthogonal
@@ -321,18 +316,15 @@ def note_symbol(x, y, letter, sharps=0, arrows=0, thickness=0.1):
     x = x[bbox]
     y = y[bbox]
 
-    x = x + x_offset
-
-    letter_offset = LETTER_OFFSETS.get(letter, 0.0)
-    result = LETTERS[letter](x-letter_offset, y, thickness)
+    result = 0*x
 
     if sharps == 0:
-        result = logical_or(result, natural(x-1.5, y, arrows, thickness))
+        result = logical_or(result, natural(x-0.5, y, arrows, thickness))
         arrows = 0
 
     elif sharps > 0:
         arrows_per_sign, extra_arrows = divmod(abs(arrows), (sharps+1)//2)
-        offset = 1.75
+        offset = 0.75
         if sharps % 2:
             result = logical_or(result, sharp(x-offset, y, (arrows_per_sign + (extra_arrows > 0))*sign(arrows), thickness))
             extra_arrows -= 1
@@ -346,7 +338,7 @@ def note_symbol(x, y, letter, sharps=0, arrows=0, thickness=0.1):
 
     elif sharps < 0:
         arrows_per_sign, extra_arrows = divmod(abs(arrows), -sharps)
-        offset = 1.25
+        offset = 0.25
         while sharps < 0:
             result = logical_or(result, flat(x-offset, y, (arrows_per_sign + (extra_arrows > 0))*sign(arrows), thickness))
             extra_arrows -= 1
@@ -355,6 +347,22 @@ def note_symbol(x, y, letter, sharps=0, arrows=0, thickness=0.1):
 
     bg[bbox] = result
     return bg
+
+
+def note_symbol(x, y, letter, sharps=0, arrows=0, thickness=0.1):
+    if sharps > 2:
+        x_offset = 0.4*((sharps+1)//2)
+    elif sharps < 0:
+        x_offset = 0.2*(-sharps-1)
+    else:
+        x_offset = 0
+
+    x = x + x_offset
+
+    letter_offset = LETTER_OFFSETS.get(letter, 0.0)
+    result = LETTERS[letter](x-letter_offset, y, thickness)
+
+    return logical_or(result, accidental_symbol(x-1, y, sharps, arrows, thickness))
 
 
 def note_symbol_5limit(x, y, threes, fives, thickness=0.1):
