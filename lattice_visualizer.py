@@ -413,11 +413,11 @@ def note_symbol_5limit(x, y, threes, fives, thickness=0.1, twos=None, reference_
 
 
 
-def square_grid(x, y, spacing=0.2, line_thickness=0.1, temperament=None):
-    gx = x - floor((x + 1)/(2 + spacing))*(2 + spacing)
-    gy = y - floor((y + 1)/(2 + spacing))*(2 + spacing)
+def square_grid(x, y, padding=0.05, line_thickness=0.1, temperament=None):
+    gx = x - floor(x + 0.5)
+    gy = y - floor(y + 0.5)
 
-    grid = maximum(abs(gx), abs(gy)) < 1
+    grid = maximum(abs(gx), abs(gy)) < 0.5 - padding
 
     min_x = x.min()
     max_x = x.max()
@@ -426,24 +426,22 @@ def square_grid(x, y, spacing=0.2, line_thickness=0.1, temperament=None):
     max_y = y.max()
 
     result = grid
-    for threes in range(int(min_y) - 1, int(max_y) + 1):
-        for fives in range(int(min_x) - 1, int(max_x) + 1):
-            loc_x = fives * (2 + spacing)
-            loc_y = threes * (2 + spacing)
-            if min_x - 1 < loc_x < max_x + 1 and min_y - 1 < loc_y < max_y + 1:
-                if temperament is not None:
-                    t, f = temperament(threes, fives)
-                else:
-                    t, f = (threes, fives)
-                result = logical_xor(result, note_symbol_5limit(2.6*(x - loc_x + 0.28), 2.6*(y - loc_y), t, f, line_thickness))
+    for threes in range(int(min_y) - 1, int(max_y) + 2):
+        for fives in range(int(min_x) - 1, int(max_x) + 2):
+            if temperament is not None:
+                t, f = temperament(threes, fives)
+            else:
+                t, f = (threes, fives)
+            result = logical_xor(
+                result,
+                note_symbol_5limit(6*(x - f + 0.1), 6*(y - t), t, f, line_thickness)
+            )
 
     return result
 
 
-def square_highlight(x, y, threes, fives, spacing=0.2):
-    loc_x = fives * (2 + spacing)
-    loc_y = threes * (2 + spacing)
-    return maximum(abs(x - loc_x), abs(y - loc_y)) < 1
+def square_highlight(x, y, threes, fives, padding=0.05, border=0.02):
+    return maximum(abs(x - fives), abs(y - threes)) < 0.5 - padding + border
 
 
 def hex_grid(x, y, spacing=0.2, line_thickness=0.1, temperament=None):
