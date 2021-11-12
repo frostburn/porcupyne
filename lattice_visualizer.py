@@ -56,6 +56,7 @@ def _digit_2(x, y, thickness):
         )
     )
 
+
 def digit_2(x, y, thickness=0.1):
     return _digit_2(x*1.75, (y-0.425)*1.75, thickness*1.75)
 
@@ -407,17 +408,20 @@ def note_symbol_5limit(x, y, threes, fives, thickness=0.1, twos=None, reference_
     if reference_letter != "A" or first_letter_of_the_octave != "C":
         raise NotImplementedError("Dynamic reference not implemented")
     # TODO: Figure out if this is the correct formula for octaves in the 5-limit for all temperaments
-    edo12 = twos*12 + threes * 19 + fives*29
+    edo12 = twos*12 + threes*19 + fives*28
     octaves = reference_octave + (edo12 + 9)//12
     return note_symbol(x, y, letter, sharps, -fives, thickness, octaves=octaves)
 
 
-
-def square_grid(x, y, padding=0.05, line_thickness=0.1, temperament=None):
+def _square_grid(x, y, padding):
     gx = x - floor(x + 0.5)
     gy = y - floor(y + 0.5)
 
-    grid = maximum(abs(gx), abs(gy)) < 0.5 - padding
+    return maximum(abs(gx), abs(gy)) < 0.5 - padding
+
+
+def square_grid(x, y, padding=0.05, line_thickness=0.1, temperament=None):
+    grid = _square_grid(x, y, padding)
 
     min_x = x.min()
     max_x = x.max()
@@ -442,6 +446,31 @@ def square_grid(x, y, padding=0.05, line_thickness=0.1, temperament=None):
 
 def square_highlight(x, y, threes, fives, padding=0.05, border=0.02):
     return maximum(abs(x - fives), abs(y - threes)) < 0.5 - padding + border
+
+
+def square_pergen_grid(x, y, period, generator, padding=0.05, line_thickness=0.1, temperament=None):
+    grid = _square_grid(x, y, padding)
+
+    min_x = x.min()
+    max_x = x.max()
+
+    min_y = y.min()
+    max_y = y.max()
+
+    result = grid
+    for m in range(int(min_y) - 1, int(max_y) + 2):
+        for n in range(int(min_x) - 1, int(max_x) + 2):
+            pitch = period*n + generator*m
+            if temperament is not None:
+                twos, threes, fives = temperament(*pitch)
+            else:
+                twos, threes, fives = pitch
+            result = logical_xor(
+                result,
+                note_symbol_5limit(6*(x - n + 0.1), 6*(y - m), threes, fives, line_thickness, twos=twos)
+            )
+
+    return result
 
 
 def hex_grid(x, y, spacing=0.2, line_thickness=0.1, temperament=None):

@@ -77,6 +77,47 @@ COMMA_NAME_BY_HOROGRAM = {
 }
 
 
+PERGEN_BY_HOROGRAM = {
+    "father": ((1, 0, 0), (2, -1, 0)),
+    "bug": ((1, 0, 0), (1, 1, -1)),
+    "dicot": ((1, 0, 0), (-2, 0, 1)),
+    "meantone": ((1, 0, 0), (2, -1, 0)),
+    "augmented": ((-2, 0, 1), (4, -1, -1)),
+    "mavila": ((1, 0, 0), (2, -1, 0)),
+    "porcupine": ((1, 0, 0), (1, -2, 1)),
+    "blackwood": ((-3, 2, 0), (12, -6, -1)),
+    "dimipent": ((1, 1, -1), (-3, -1, 2)),
+    "stural": ((-5, 2, 1), (4, -1, -1)),
+    "magic": ((1, 0, 0), (-2, 0, 1)),
+    "ripple": ((1, 0, 0), (0, 3, -2)),
+    "hanson": ((1, 0, 0), (1, 1, -1)),
+    "negripent": ((1, 0, 0), (4, -1, -1)),
+    "tetracot": ((1, 0, 0), (1, -2, 1)),
+    "superpyth": ((1, 0, 0), (2, -1, 0)),
+    "helmholtz": ((1, 0, 0), (2, -1, 0)),
+    "sensipent": ((1, 0, 0), (1, 4, -3)),
+    "passion": ((1, 0, 0), (4, -1, -1)),
+    "würschmidt": ((1, 0, 0), (-2, 0, 1)),
+    "compton": ((8, -5, 0), (-61, 40, -1)),
+    "amity": ((1, 0, 0), (-3, 5, -2)),
+    "orson": ((1, 0, 0), (-6, 1, 2)),
+    "vishnu": ((-11, -3, 7), (-3, -1, 2)),
+    "luna": ((1, 0, 0), (18, -1, -7)),
+    "shibboleth": ((1, 0, 0), (1, 1, -1)),
+    "quinbigu": ((1, 0, 0), (1, 1, -1)),
+    "quintriyo": ((3, 4, -4), (-16, -25, 24)),
+    "doublewide": ((-4, -3, 4), (4, 2, -3)),
+    "unicorn": ((1, 0, 0), (1, -5, 3)),
+    "fifive": ((0, -7, 5), (0, 3, -2)),
+    "nusecond": ((1, 0, 0), (-2, -6, 5)),
+    "parakleismic": ((1, 0, 0), (1, 1, -1)),
+    "valentine": ((1, 0, 0), (-3, -1, 2)),
+    "sevond": ((1, -2, 1), (-5, 9, -4)),
+    "bohpieric": ((1, 0, 0), (0, 3, -2)),
+    "wronecki": ((1, -2, 1), (-4, 7, -3)),
+}
+
+
 def temper(comma_list, just_mapping=JI_5LIMIT, num_iterations=1000):
     """
     Temper out a given list of commas.
@@ -294,6 +335,27 @@ def canonize(threes, fives, horogram="JI"):
 
     if horogram == "JI":
         return (threes, fives)
+
+    raise ValueError("Unrecognized temperament")
+
+
+def canonize2(twos, threes, fives, horogram="JI"):
+    """
+    Reduce a pitch given in powers of two, three and five into a canonical form based on the temperament.
+    """
+    # pylint: disable=invalid-name
+    if horogram == "meantone":
+        return (twos - 4*fives, threes + 4*fives, 0)
+
+    if horogram == "augmented":
+        return (twos + ((fives+1)//3)*7, threes, fives - ((fives+1)//3)*3)
+
+    if horogram == "porcupine":
+        m = fives - ((fives + 1)//3)*3
+        return (twos - (fives - m)//3, threes + 5*(fives - m)//3, m)
+
+    if horogram == "JI":
+        return (twos, threes, fives)
 
     raise ValueError("Unrecognized temperament")
 

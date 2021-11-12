@@ -1,3 +1,4 @@
+from numpy import dot, log
 from temperament import COMMA_BY_HOROGRAM, minimax, temper, rank2_pergen
 
 
