@@ -18,8 +18,17 @@ def hexagon(x, y):
     return logical_and(abs(y) < 1, abs(abs(x)*SQ3 + abs(y)) < 2)
 
 
+def digit_minus(x, y, thickness=0.1):
+    return logical_and(abs(y) < thickness, abs(x) < 0.25 + thickness)
+
+
+def digit_dot(x, y, thickness=0.1):
+    r = sqrt(x*x + (y+1-thickness)**2)
+    return r < 2*thickness
+
+
 def digit_0(x, y, thickness=0.1):
-    r = sqrt(2*x*x + y*y)
+    r = sqrt(2.2*x*x + y*y)
     return abs(r - 1) < thickness
 
 
@@ -64,10 +73,10 @@ def digit_3(x, y, thickness=0.1):
 
 def digit_4(x, y, thickness=0.1):
     return logical_and(
-        logical_and(abs(y) < 1 + thickness, abs(x+0.25+thickness) < 0.75+thickness),
+        logical_and(abs(y) < 1 + thickness, abs(x+0.19+thickness) < 0.6+thickness),
         logical_or(
             minimum(abs(x), abs(y+thickness)) < thickness,
-            abs(x-y+1+thickness) < thickness,
+            logical_and(abs(1.25*x-y+1+thickness) < 1.25*thickness, y > -thickness)
         )
     )
 
@@ -107,8 +116,8 @@ def digit_6(x, y, thickness=0.1):
 
 def digit_7(x, y, thickness=0.1):
     result = logical_and(
-        abs(x-thickness) < 0.75 + thickness,
-        logical_or(y > 1 - thickness, abs(2*x - y - 0.75) < sqrt(5)*thickness)
+        abs(x-0.15) < 0.57 + thickness,
+        logical_or(y > 1 - thickness, abs(3*x - y - 1.2) < sqrt(10)*thickness)
     )
     return logical_and(result, abs(y) < 1 + thickness)
 
@@ -272,6 +281,8 @@ LETTER_OFFSETS = {
 
 
 DIGITS = {
+    "-": digit_minus,
+    ".": digit_dot,
     "0": digit_0,
     "1": digit_1,
     "2": digit_2,
@@ -283,6 +294,22 @@ DIGITS = {
     "8": digit_8,
     "9": digit_9,
 }
+
+DIGIT_OFFSETS = {
+    ".": 0.2,
+    "4": 0.3,
+    "5": -0.1,
+}
+
+
+def number_symbol(x, y, number, thickness):
+    digits = str(number)
+    result = DIGITS[digits[0]](x - DIGIT_OFFSETS.get(digits[0], 0), y, thickness)
+    offset = 1
+    for digit in digits[1:]:
+        result = logical_or(result, DIGITS[digit](x - DIGIT_OFFSETS.get(digit, 0) - offset, y, thickness))
+        offset += 1.5
+    return result
 
 
 def accidental_symbol(x, y, sharps, arrows, thickness):
@@ -349,7 +376,7 @@ def accidental_symbol(x, y, sharps, arrows, thickness):
     return bg
 
 
-def note_symbol(x, y, letter, sharps=0, arrows=0, thickness=0.1):
+def note_symbol(x, y, letter, sharps=0, arrows=0, thickness=0.1, octaves=None):
     if sharps > 2:
         x_offset = 0.4*((sharps+1)//2)
     elif sharps < 0:
@@ -362,7 +389,12 @@ def note_symbol(x, y, letter, sharps=0, arrows=0, thickness=0.1):
     letter_offset = LETTER_OFFSETS.get(letter, 0.0)
     result = LETTERS[letter](x-letter_offset, y, thickness)
 
-    return logical_or(result, accidental_symbol(x-1, y, sharps, arrows, thickness))
+    if octaves is None:
+        return logical_or(result, accidental_symbol(x-1, y, sharps, arrows, thickness))
+
+    result = logical_or(result, accidental_symbol((x-1)*1.75, (y-0.95)*1.75, sharps, arrows, thickness))
+    result = logical_or(result, number_symbol((x-1.3)*2, (y+0.75)*2, octaves, thickness))
+    return result
 
 
 def note_symbol_5limit(x, y, threes, fives, thickness=0.1):
