@@ -2,7 +2,8 @@
 import argparse
 from pylab import *
 from lattice_visualizer import hex_grid, hex_highlight, make_picture_frame, square_pergen_grid
-from temperament import COMMA_BY_HOROGRAM, PERGEN_BY_HOROGRAM, canonize, canonize2
+from temperament import COMMA_BY_HOROGRAM, PERGEN_BY_HOROGRAM
+from note import notate
 
 
 def main():
@@ -27,12 +28,12 @@ def main():
         period, generator = PERGEN_BY_HOROGRAM[args.temperament]
 
     if period is None and generator is None:
-        temperament = lambda threes, fives: canonize(threes, fives, args.temperament)
+        notation = lambda threes, fives: notate(threes, fives, horogram=args.temperament)
 
         x = linspace(-10, 10, 1080)
         x, y = meshgrid(x, -x)  # pylint: disable=invalid-unary-operand-type
 
-        grid = hex_grid(x, y, temperament=temperament)*1.0
+        grid = hex_grid(x, y, notation=notation)*1.0
 
         if comma is None:
             highlights = hex_highlight(x, y, 0, 0)
@@ -42,7 +43,7 @@ def main():
                 highlights += hex_highlight(x, y, n*comma[1], n*comma[2])
         image = [grid - highlights*0.5, grid - highlights, grid]
     else:
-        temperament = lambda twos, threes, fives: canonize2(twos, threes, fives, args.temperament)
+        notation = lambda pitch: notate(pitch[1], pitch[2], twos=pitch[0], horogram=args.temperament)
 
         period = array(period)
         generator = array(generator)
@@ -50,7 +51,7 @@ def main():
         x = linspace(-5, 5, 1080)
         x, y = meshgrid(x, -x)  # pylint: disable=invalid-unary-operand-type
 
-        grid = square_pergen_grid(x, y, period, generator, temperament=temperament)
+        grid = square_pergen_grid(x, y, period, generator, notation=notation)
         image = [grid, grid, grid]
 
     fname = args.outfile

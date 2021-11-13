@@ -231,7 +231,7 @@ def rank2_pergen(comma, mapping=None, search_depth=10):
 
 def canonize(threes, fives, horogram="JI"):
     """
-    Reduce a pitch class given in powers of three and five into a canonical form based on the temperament.
+    Reduce a pitch class given in powers of three and five into a canonical form that has the same frequency class based on the temperament.
     """
     # pylint: disable=invalid-name
     if horogram == "father":
@@ -242,9 +242,7 @@ def canonize(threes, fives, horogram="JI"):
         return (threes + 3*(fives - m)//2, m)
 
     if horogram == "dicot":
-        permutation = [0, 4, 1, 5, 2, 6, 3]
-        num = fives + 2*threes
-        return ((num//len(permutation))*len(permutation) + permutation[num % len(permutation)], 0)
+        return (0, fives + 2*threes)
 
     if horogram == "meantone":
         return (threes + 4*fives, 0)
@@ -260,10 +258,7 @@ def canonize(threes, fives, horogram="JI"):
         return (threes + 5*(fives - m)//3, m)
 
     if horogram == "blackwood":
-        threes = threes - ((threes + 1)//5)*5
-        if threes == 3:
-            return (threes + 4*fives + 4, -1)
-        return (threes + 4*fives, 0)
+        return (threes - ((threes + 2)//5)*5, fives)
 
     if horogram == "dimipent":
         f = (fives+2)//4
@@ -275,12 +270,7 @@ def canonize(threes, fives, horogram="JI"):
         return (threes - 2*fives, 0)
 
     if horogram == "magic":
-        fifths_19edo = [0, 7, 14, 2, 9, 16, 4, 11, 18, 6, 13, 1, 8, 15, 3, 10, 17, 5, 12]
-        index = fives + 5*threes
-        edo19 = (threes*30 + fives*44) % 19
-        meantone = (fifths_19edo[edo19] + 8) % 19 - 8
-        arrows = index // 19
-        return (meantone + arrows*4, -arrows)
+        return (0, fives + 5*threes)
 
     if horogram == "ripple":
         m = fives - ((fives+2)//5)*5
@@ -309,12 +299,7 @@ def canonize(threes, fives, horogram="JI"):
         return (threes - 4*(fives - m)//5, m)
 
     if horogram == "würschmidt":
-        fifths_31edo = [0, 19, 7, 26, 14, 2, 21, 9, 28, 16, 4, 23, 11, 30, 18, 6, 25, 13, 1, 20, 8, 27, 15, 3, 22, 10, 29, 17, 5, 24, 12]
-        index = fives + 8*threes
-        edo31 = (threes*49 + fives*72) % 31
-        meantone = (fifths_31edo[edo31] + 11) % 31 - 11
-        arrows = index // 31
-        return (meantone + arrows*4, -arrows)
+        return (0, fives + 8*threes)
 
     if horogram == "compton":
         arrows = -fives
@@ -341,7 +326,7 @@ def canonize(threes, fives, horogram="JI"):
 
 def canonize2(twos, threes, fives, horogram="JI"):
     """
-    Reduce a pitch given in powers of two, three and five into a canonical form based on the temperament.
+    Reduce a pitch given in powers of two, three and five into a canonical form that has the same frequency based on the temperament.
     """
     # pylint: disable=invalid-name
     if horogram == "meantone":
@@ -353,23 +338,6 @@ def canonize2(twos, threes, fives, horogram="JI"):
     if horogram == "porcupine":
         m = fives - ((fives + 1)//3)*3
         return (twos - (fives - m)//3, threes + 5*(fives - m)//3, m)
-
-    if horogram == "magic":
-        fifths_19edo = [0, 7, 14, 2, 9, 16, 4, 11, 18, 6, 13, 1, 8, 15, 3, 10, 17, 5, 12]
-        index = fives + 5*threes
-        edo19 = (threes*30 + fives*44) % 19
-        meantone = (fifths_19edo[edo19] + 8) % 19 - 8
-        arrows = index // 19
-        # TODO: Figure out where these numbers come from
-        octave_correction = [0, -4, -8, 18, 14, 10, 6, 1, 28, 24, 20, 16, 12, 38, 34, 30, 26, 52, 48, 40, 36]
-        octave_correction_neg = [8, 12, -14, -10, -6, -2, -28, -24, -20, -16, -12, -39, -34, -30, -26, -22, -48, -44, -40, -32]
-        if index >= 0 and index < len(octave_correction):
-            correction = octave_correction[index]
-        elif index < 0 and -index <= len(octave_correction_neg):
-            correction = octave_correction_neg[-index-1]
-        else:
-            raise NotImplementedError("Full octave correction for magic not implemented yet")
-        return (twos + correction, meantone + arrows*4, -arrows)
 
     if horogram == "JI":
         return (twos, threes, fives)
@@ -407,7 +375,7 @@ def mod_comma(pitch, comma):
     return pitch
 
 
-# TODO: mod_comma_list
+# TODO: def comma_equals(pitch_a, pitch_b, comma_list, persistence=10):
 
 
 def find_subset_commas(max_complexity, factors, threshold=Fraction(10, 9), manhattan=False):

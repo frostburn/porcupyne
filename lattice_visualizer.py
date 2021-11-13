@@ -1,7 +1,7 @@
 # pylint: disable=invalid-name, missing-function-docstring
 from numpy import logical_and, logical_or, logical_xor, sqrt, stack, clip, maximum, sign, floor, linspace, meshgrid, minimum
 from numpy.random import random
-from util import LYDIAN
+from note import notate
 
 
 def make_picture_frame(rgb, dither=1.0/256.0):
@@ -378,7 +378,7 @@ def accidental_symbol(x, y, sharps, arrows, thickness):
     return bg
 
 
-def note_symbol(x, y, letter, sharps=0, arrows=0, thickness=0.1, octaves=None):
+def note_symbol(x, y, letter, sharps=0, arrows=0, octaves=None, thickness=0.1):
     if sharps > 2:
         x_offset = 0.4*((sharps+1)//2)
     elif sharps < 0:
@@ -399,19 +399,6 @@ def note_symbol(x, y, letter, sharps=0, arrows=0, thickness=0.1, octaves=None):
     return result
 
 
-def note_symbol_5limit(x, y, threes, fives, thickness=0.1, twos=None, reference_letter="A", reference_octave=4, first_letter_of_the_octave="C"):
-    index = LYDIAN.index(reference_letter) + threes + fives*4
-    sharps = index // len(LYDIAN)
-    letter = LYDIAN[index % len(LYDIAN)]
-    if twos is None:
-        return note_symbol(x, y, letter, sharps, -fives, thickness)
-    if reference_letter != "A" or first_letter_of_the_octave != "C":
-        raise NotImplementedError("Dynamic reference not implemented")
-    edo12 = twos*12 + threes*19 + fives*28
-    octaves = reference_octave + (edo12 + 9)//12
-    return note_symbol(x, y, letter, sharps, -fives, thickness, octaves=octaves)
-
-
 def _square_grid(x, y, padding):
     gx = x - floor(x + 0.5)
     gy = y - floor(y + 0.5)
@@ -419,7 +406,7 @@ def _square_grid(x, y, padding):
     return maximum(abs(gx), abs(gy)) < 0.5 - padding
 
 
-def square_grid(x, y, padding=0.05, line_thickness=0.1, temperament=None):
+def square_grid(x, y, padding=0.05, line_thickness=0.1, notation=None):
     grid = _square_grid(x, y, padding)
 
     min_x = x.min()
@@ -431,13 +418,13 @@ def square_grid(x, y, padding=0.05, line_thickness=0.1, temperament=None):
     result = grid
     for threes in range(int(min_y) - 1, int(max_y) + 2):
         for fives in range(int(min_x) - 1, int(max_x) + 2):
-            if temperament is not None:
-                t, f = temperament(threes, fives)
+            if notation is None:
+                letter, sharps, arrows = notate(threes, fives, horogram="JI")
             else:
-                t, f = (threes, fives)
+                letter, sharps, arrows = notation(threes, fives)
             result = logical_xor(
                 result,
-                note_symbol_5limit(6*(x - f + 0.1), 6*(y - t), t, f, line_thickness)
+                note_symbol(6*(x - fives + 0.1), 6*(y - threes), letter, sharps, arrows, None, line_thickness)
             )
 
     return result
@@ -447,7 +434,7 @@ def square_highlight(x, y, threes, fives, padding=0.05, border=0.02):
     return maximum(abs(x - fives), abs(y - threes)) < 0.5 - padding + border
 
 
-def square_pergen_grid(x, y, period, generator, padding=0.05, line_thickness=0.1, temperament=None):
+def square_pergen_grid(x, y, period, generator, padding=0.05, line_thickness=0.1, notation=None):
     grid = _square_grid(x, y, padding)
 
     min_x = x.min()
@@ -460,19 +447,19 @@ def square_pergen_grid(x, y, period, generator, padding=0.05, line_thickness=0.1
     for m in range(int(min_y) - 1, int(max_y) + 2):
         for n in range(int(min_x) - 1, int(max_x) + 2):
             pitch = period*n + generator*m
-            if temperament is not None:
-                twos, threes, fives = temperament(*pitch)
+            if notation is None:
+                letter, sharps, arrows, octaves = notate(pitch[1], pitch[2], twos=pitch[0], horogram="JI")
             else:
-                twos, threes, fives = pitch
+                letter, sharps, arrows, octaves = notation(pitch)
             result = logical_xor(
                 result,
-                note_symbol_5limit(6*(x - n + 0.1), 6*(y - m), threes, fives, line_thickness, twos=twos)
+                note_symbol(6*(x - n + 0.1), 6*(y - m), letter, sharps, arrows, octaves, line_thickness)
             )
 
     return result
 
 
-def hex_grid(x, y, spacing=0.2, line_thickness=0.1, temperament=None):
+def hex_grid(x, y, spacing=0.2, line_thickness=0.1, notation=None):
     def grid_coords(x, y, spacing=0.2):
         gx = x - floor((x + SQ3 + 0.5*spacing)/(2*SQ3 + spacing))*(2*SQ3 + spacing)
         spacing *= 0.5*SQ3
@@ -497,11 +484,11 @@ def hex_grid(x, y, spacing=0.2, line_thickness=0.1, temperament=None):
             loc_x = 0.5*(2*SQ3 + spacing)*fives
             loc_y = (2 + 0.5*spacing*SQ3)*threes + (1 + spacing*0.25*SQ3)*fives
             if min_x - 1 < loc_x < max_x + 1 and min_y - 1 < loc_y < max_y + 1:
-                if temperament is not None:
-                    t, f = temperament(threes, fives)
+                if notation is None:
+                    letter, sharps, arrows = notate(threes, fives, horogram="JI")
                 else:
-                    t, f = (threes, fives)
-                result = logical_xor(result, note_symbol_5limit(2.75*(x - loc_x + 0.25), 2.75*(y - loc_y), t, f, line_thickness))
+                    letter, sharps, arrows = notation(threes, fives)
+                result = logical_xor(result, note_symbol(2.75*(x - loc_x + 0.25), 2.75*(y - loc_y), letter, sharps, arrows, None, line_thickness))
 
     return result
 
@@ -528,7 +515,7 @@ RESOLUTIONS = {
 
 
 # TODO: Anti-aliasing
-def visualize_progression(resolution, x0, y0, scale, notess, temperament=None, comma=None):
+def visualize_progression(resolution, x0, y0, scale, notess, notation=None, comma=None):
     width, height = RESOLUTIONS[resolution]
     aspect = width / height
     x = linspace(-scale*aspect, scale*aspect, width) + x0
@@ -536,7 +523,7 @@ def visualize_progression(resolution, x0, y0, scale, notess, temperament=None, c
 
     x, y = meshgrid(x, y)
 
-    grid = hex_grid(x, y, temperament=temperament)*1.0
+    grid = hex_grid(x, y, notation=notation)*1.0
     for notes in notess:
         highlights = 0*x
         root_highlights = 0*x
