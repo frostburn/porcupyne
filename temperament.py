@@ -354,6 +354,23 @@ def canonize2(twos, threes, fives, horogram="JI"):
         m = fives - ((fives + 1)//3)*3
         return (twos - (fives - m)//3, threes + 5*(fives - m)//3, m)
 
+    if horogram == "magic":
+        fifths_19edo = [0, 7, 14, 2, 9, 16, 4, 11, 18, 6, 13, 1, 8, 15, 3, 10, 17, 5, 12]
+        index = fives + 5*threes
+        edo19 = (threes*30 + fives*44) % 19
+        meantone = (fifths_19edo[edo19] + 8) % 19 - 8
+        arrows = index // 19
+        # TODO: Figure out where these numbers come from
+        octave_correction = [0, -4, -8, 18, 14, 10, 6, 1, 28, 24, 20, 16, 12, 38, 34, 30, 26, 52, 48, 40, 36]
+        octave_correction_neg = [8, 12, -14, -10, -6, -2, -28, -24, -20, -16, -12, -39, -34, -30, -26, -22, -48, -44, -40, -32]
+        if index >= 0 and index < len(octave_correction):
+            correction = octave_correction[index]
+        elif index < 0 and -index <= len(octave_correction_neg):
+            correction = octave_correction_neg[-index-1]
+        else:
+            raise NotImplementedError("Full octave correction for magic not implemented yet")
+        return (twos + correction, meantone + arrows*4, -arrows)
+
     if horogram == "JI":
         return (twos, threes, fives)
 

@@ -4,8 +4,7 @@ Parsing tools for turning strings into 5-limit pitch vectors
 from fractions import Fraction
 from numpy import array
 from note import Note
-
-LYDIAN = ("F", "C", "G", "D", "A", "E", "B")
+from util import LYDIAN
 
 
 def parse_pitch(token, reference_letter="A", reference_octave=4, first_letter_of_the_octave="C"):

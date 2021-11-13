@@ -1,6 +1,9 @@
 from pylab import log
 
 
+LYDIAN = ("F", "C", "G", "D", "A", "E", "B")
+
+
 def gcd(a, b):
     # pylint: disable=invalid-name
     if b == 0:
@@ -22,11 +25,10 @@ def note_name(index, flats=False):
     return ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"][index%12]
 
 
-def note_unicode_5limit(threes, fives):
-    lydian = ["F", "C", "G", "D", "A", "E", "B"]
-    index = 1 + threes + fives*4
-    sharps = index // len(lydian)
-    letter = lydian[index % len(lydian)]
+def note_unicode_5limit(threes, fives, twos=None, reference_letter="A", reference_octave=4, first_letter_of_the_octave="C"):
+    index = LYDIAN.index(reference_letter) + threes + fives*4
+    sharps = index // len(LYDIAN)
+    letter = LYDIAN[index % len(LYDIAN)]
     if sharps == 0:
         accidental = chr(0x266E)
         if fives > 0:
@@ -70,7 +72,15 @@ def note_unicode_5limit(threes, fives):
         elif fives < 0:
             accidental += chr(0x1F811)
 
-    result = letter + accidental
+    if twos is None:
+        result = letter + accidental
+    else:
+        if reference_letter != "A" or first_letter_of_the_octave != "C":
+            raise NotImplementedError("Dynamic reference not implemented")
+        edo12 = twos*12 + threes*19 + fives*28
+        octaves = reference_octave + (edo12 + 9)//12
+        result = letter + str(octaves) + accidental
+
     if abs(fives) > 1:
         result += str(abs(fives))
     return result
