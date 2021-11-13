@@ -260,6 +260,36 @@ def double_sharp(x, y, arrows=0, thickness=0.1):
     return result
 
 
+def one_and_a_half_sharp(x, y, arrows=0, thickness=0.1):
+    result = logical_and(
+        logical_or(abs(x) < 0.5*thickness, abs(abs(x)-0.4) < 0.5*thickness),
+        abs(y) < 1
+    )
+    result = logical_or(result, logical_and(abs(-0.35+abs(y-0.5*x)) < thickness, abs(x) < 0.6+thickness*0.5))
+    if arrows > 0:
+        for i in range(arrows):
+            result = logical_or(result, arrow(2*(x+0.4), -2*(y-1+0.3*i)))
+    elif arrows < 0:
+        for i in range(-arrows):
+            result = logical_or(result, arrow(2*(x-0.4), 2*(y+1-0.3*i)))
+    return result
+
+
+def half_sharp(x, y, arrows=0, thickness=0.1):
+    result = logical_and(
+        abs(x) < 0.5*thickness,
+        abs(y) < 1
+    )
+    result = logical_or(result, logical_and(abs(-0.35+abs(y-0.5*x)) < thickness, abs(x) < 0.4+thickness*0.5))
+    if arrows > 0:
+        for i in range(arrows):
+            result = logical_or(result, arrow(2*x, -2*(y-1+0.3*i)))
+    elif arrows < 0:
+        for i in range(-arrows):
+            result = logical_or(result, arrow(2*x, 2*(y+1-0.3*i)))
+    return result
+
+
 LETTERS = {
     "F": letter_F,
     "C": letter_C,
@@ -317,10 +347,28 @@ def number_symbol(x, y, number, thickness):
 def accidental_symbol(x, y, sharps, arrows, thickness):
     bg = 0*x
 
+    has_half_sharp = False
+    has_one_and_a_half_sharp = False
+    has_half_flat = False
+    # Note: Floating point numbers are exact for multiples of 0.5 so this shouldn't cause issues.
+    if sharps > 0 and sharps == int(sharps) + 0.5:
+        if int(sharps) % 2:
+            has_one_and_a_half_sharp = True
+        else:
+            has_half_sharp = True
+    if sharps < 0 and sharps == int(sharps) - 0.5:
+        has_half_flat = True
+
+    sharps = int(sharps)
+
     if sharps > 0:
         accidental_space = 0.75 + 1.5 * ((sharps+1)//2 - 1)
+        if has_half_sharp:
+            accidental_space += 1.3
     elif sharps < 0:
         accidental_space = 0.25 + 0.75 * (-1-sharps)
+        if has_half_flat:
+            accidental_space += 0.75
     else:
         accidental_space = 0.4
 
@@ -345,17 +393,25 @@ def accidental_symbol(x, y, sharps, arrows, thickness):
     x = x[bbox]
     y = y[bbox]
 
-    result = 0*x
-
-    if sharps == 0:
-        result = logical_or(result, natural(x-0.5, y, arrows, thickness))
+    if sharps == 0 and not (has_half_flat or has_half_sharp):
+        result = natural(x-0.5, y, arrows, thickness)
         arrows = 0
 
-    elif sharps > 0:
-        arrows_per_sign, extra_arrows = divmod(abs(arrows), (sharps+1)//2)
+    elif sharps > 0 or has_half_sharp:
+        arrows_per_sign, extra_arrows = divmod(abs(arrows), (sharps+1)//2 + has_half_sharp)
         offset = 0.75
+        if has_half_sharp:
+            result = half_sharp(x-offset, y, (arrows_per_sign + (extra_arrows > 0))*sign(arrows), thickness)
+            extra_arrows -= 1
+            offset += 1.3
+        else:
+            result = 0*x
         if sharps % 2:
-            result = logical_or(result, sharp(x-offset, y, (arrows_per_sign + (extra_arrows > 0))*sign(arrows), thickness))
+            if has_one_and_a_half_sharp:
+                result = logical_or(result, one_and_a_half_sharp(x-offset, y, (arrows_per_sign + (extra_arrows > 0))*sign(arrows), thickness))
+                has_one_and_a_half_sharp = False
+            else:
+                result = logical_or(result, sharp(x-offset, y, (arrows_per_sign + (extra_arrows > 0))*sign(arrows), thickness))
             extra_arrows -= 1
             offset += 1.5
             sharps -= 1
@@ -365,9 +421,15 @@ def accidental_symbol(x, y, sharps, arrows, thickness):
             offset += 1.5
             sharps -= 2
 
-    elif sharps < 0:
-        arrows_per_sign, extra_arrows = divmod(abs(arrows), -sharps)
+    elif sharps < 0 or has_half_flat:
+        arrows_per_sign, extra_arrows = divmod(abs(arrows), -sharps + has_half_flat)
         offset = 0.25
+        if has_half_flat:
+            result = flat(offset-x+0.2, y, (arrows_per_sign + (extra_arrows > 0))*sign(arrows), thickness)
+            extra_arrows -= 1
+            offset += 0.75
+        else:
+            result = 0*x
         while sharps < 0:
             result = logical_or(result, flat(x-offset, y, (arrows_per_sign + (extra_arrows > 0))*sign(arrows), thickness))
             extra_arrows -= 1
