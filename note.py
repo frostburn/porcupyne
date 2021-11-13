@@ -67,6 +67,34 @@ def notate(threes, fives, twos=None, horogram="JI"):
     return notate(threes, fives, twos=twos, horogram="JI")
 
 
+def notate_island(threes, supermajors, twos=None, horogram="JI"):
+    """
+    Gives the notation for a 2.3.13/5 subgroup pitch vector in terms of letter, (half) sharp signs, arrows and octaves.
+    """
+    if horogram == "JI":
+        index = LYDIAN_INDEX_A + threes + supermajors*4 - (supermajors//2)*5
+        sharps = index // len(LYDIAN) + 0.5*(supermajors % 2)
+        letter = LYDIAN[index % len(LYDIAN)]
+        arrows = supermajors // 2
+
+    if twos is None:
+        if horogram == "JI":
+            return letter, sharps, arrows
+        if horogram == "barbados":
+            letter, sharps, arrows = notate_island(threes, supermajors, horogram="JI")
+            return letter, sharps, 0
+
+    if horogram == "JI":
+        edo24 = twos*24 + threes*38 + supermajors*33
+        octaves = REFERENCE_OCTAVE + (edo24 + 18)//24
+        return letter, sharps, arrows, octaves
+    if horogram == "barbados":
+        letter, sharps, arrows, octaves = notate_island(threes, supermajors, twos=twos, horogram="JI")
+        return letter, sharps, 0, octaves
+
+    raise ValueError("Unknown temperament")
+
+
 def note_unicode_5limit(threes, fives, twos=None, horogram="JI"):
     octaves = None
     if twos is None:

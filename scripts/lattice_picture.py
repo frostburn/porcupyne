@@ -2,8 +2,8 @@
 import argparse
 from pylab import *
 from lattice_visualizer import hex_grid, square_grid, hex_highlight, square_highlight, make_picture_frame, square_pergen_grid
-from temperament import COMMA_BY_HOROGRAM, PERGEN_BY_HOROGRAM
-from note import notate
+from temperament import COMMA_BY_HOROGRAM, PERGEN_BY_HOROGRAM, ISLAND_COMMA_BY_HOROGRAM, ISLAND_PERGEN_BY_HOROGRAM
+from note import notate, notate_island
 
 
 def main():
@@ -15,6 +15,7 @@ def main():
     parser.add_argument('--period', nargs='+', type=int)
     parser.add_argument('--generator', nargs='+', type=int)
     parser.add_argument('--hex', action='store_true')
+    parser.add_argument('--island', action='store_true')
     args = parser.parse_args()
 
     comma = None
@@ -22,14 +23,23 @@ def main():
     generator = args.generator
 
     if args.temperament != "JI":
-        comma = COMMA_BY_HOROGRAM[args.temperament]
+        if args.island:
+            comma = ISLAND_COMMA_BY_HOROGRAM[args.temperament]
+        else:
+            comma = COMMA_BY_HOROGRAM[args.temperament]
     if args.pergen:
         if period is not None or generator is not None:
             raise ValueError("Custom period or generator provided when canonical was requested")
-        period, generator = PERGEN_BY_HOROGRAM[args.temperament]
+        if args.island:
+            period, generator = ISLAND_PERGEN_BY_HOROGRAM[args.temperament]
+        else:
+            period, generator = PERGEN_BY_HOROGRAM[args.temperament]
 
     if period is None and generator is None:
-        notation = lambda threes, fives: notate(threes, fives, horogram=args.temperament)
+        if args.island:
+            notation = lambda threes, supermajors: notate_island(threes, supermajors, horogram=args.temperament)
+        else:
+            notation = lambda threes, fives: notate(threes, fives, horogram=args.temperament)
 
         if args.hex:
             x = linspace(-10, 10, 1080)
@@ -53,7 +63,10 @@ def main():
                 highlights += highlight(x, y, n*comma[1], n*comma[2])
         image = [grid - highlights*0.5, grid - highlights, grid]
     else:
-        notation = lambda pitch: notate(pitch[1], pitch[2], twos=pitch[0], horogram=args.temperament)
+        if args.island:
+            notation = lambda pitch: notate_island(pitch[1], pitch[2], twos=pitch[0], horogram=args.temperament)
+        else:
+            notation = lambda pitch: notate(pitch[1], pitch[2], twos=pitch[0], horogram=args.temperament)
 
         period = array(period)
         generator = array(generator)

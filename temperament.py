@@ -118,6 +118,21 @@ PERGEN_BY_HOROGRAM = {
 }
 
 
+ISLAND_COMMA_BY_HOROGRAM = {
+    "barbados": (2, -3, 2),
+}
+
+
+ISLAND_COMMA_NAME_BY_HOROGRAM = {
+    "barbados": "parizeksma",
+}
+
+
+ISLAND_PERGEN_BY_HOROGRAM = {
+    "barbados": ((1, 0, 0), (0, 1, -1)),
+}
+
+
 def temper(comma_list, just_mapping=JI_5LIMIT, num_iterations=1000):
     """
     Temper out a given list of commas.
