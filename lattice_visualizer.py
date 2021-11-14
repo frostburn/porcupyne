@@ -425,9 +425,9 @@ def accidental_symbol(x, y, sharps, arrows, thickness):
         arrows_per_sign, extra_arrows = divmod(abs(arrows), -sharps + has_half_flat)
         offset = 0.25
         if has_half_flat:
-            result = flat(offset-x+0.2, y, (arrows_per_sign + (extra_arrows > 0))*sign(arrows), thickness)
+            result = flat(offset-x+0.3, y, (arrows_per_sign + (extra_arrows > 0))*sign(arrows), thickness)
             extra_arrows -= 1
-            offset += 0.75
+            offset += 0.55
         else:
             result = 0*x
         while sharps < 0:

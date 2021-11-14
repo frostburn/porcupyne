@@ -4,7 +4,7 @@ Notation and containers for multi-dimensional MIDI style data
 """
 from functools import total_ordering
 from numpy import array, dot, exp
-from temperament import JI_5LIMIT, mod_comma, canonize, canonize2
+from temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND
 from util import note_unicode
 
 
@@ -67,15 +67,21 @@ def notate(threes, fives, twos=None, horogram="JI"):
     return notate(threes, fives, twos=twos, horogram="JI")
 
 
-def notate_island(threes, supermajors, twos=None, horogram="JI"):
+def notate_island(threes, supermajors, twos=None, horogram="JI", flatward=False):
     """
     Gives the notation for a 2.3.13/5 subgroup pitch vector in terms of letter, (half) sharp signs, arrows and octaves.
     """
     if horogram == "JI":
-        index = LYDIAN_INDEX_A + threes + supermajors*4 - (supermajors//2)*5
-        sharps = index // len(LYDIAN) + 0.5*(supermajors % 2)
-        letter = LYDIAN[index % len(LYDIAN)]
-        arrows = supermajors // 2
+        if flatward:
+            index = LYDIAN_INDEX_A + threes + supermajors*4 - ((supermajors+1)//2)*5
+            sharps = index // len(LYDIAN) - 0.5*(supermajors % 2)
+            letter = LYDIAN[index % len(LYDIAN)]
+            arrows = (supermajors + 1)//2
+        else:
+            index = LYDIAN_INDEX_A + threes + supermajors*4 - (supermajors//2)*5
+            sharps = index // len(LYDIAN) + 0.5*(supermajors % 2)
+            letter = LYDIAN[index % len(LYDIAN)]
+            arrows = supermajors // 2
 
     if twos is None:
         if horogram == "JI":
@@ -139,6 +145,9 @@ class PitchContext:
 
 
 DEFAULT_PITCH_CONTEXT = PitchContext(JI_5LIMIT)
+
+
+ISLAND_PITCH_CONTEXT = PitchContext(JI_ISLAND)
 
 
 @total_ordering

@@ -329,7 +329,7 @@ CHORDS_5LIMIT = {
 }
 
 
-def parse(text, beat_duration=Fraction(1), initial_pitch=(0, 0, 0), extra_intervals=None, extra_chords=None, pitch_context=None):
+def parse(text, beat_duration=Fraction(1), initial_pitch=(0, 0, 0), extra_intervals=None, extra_chords=None, pitch_context=None, interval_parser=None, main_chords=None):
     """
     Parse a string of intervals separated by whitespace into Note instances
 
@@ -340,18 +340,23 @@ def parse(text, beat_duration=Fraction(1), initial_pitch=(0, 0, 0), extra_interv
 
     >>> parse("P1[3/2] P1[3/2] P1 Z P1 P1 Z "*2)  # Son clave
     """
+    if interval_parser is None:
+        interval_parser = parse_interval
+    if main_chords is None:
+        main_chords = CHORDS_5LIMIT
+
     #pylint: disable=invalid-name
     def _parse_interval(token):
         direction = -1 if token[0] == "-" else 1
         token = token.lstrip("+-")
         if extra_intervals is not None and token in extra_intervals:
             return direction * array(extra_intervals[token])
-        return direction * parse_interval(token)
+        return direction * interval_parser(token)
 
     def _parse_chord(token):
         if extra_chords is not None and token in extra_chords:
             return extra_chords[token]
-        return CHORDS_5LIMIT[token]
+        return main_chords[token]
 
     beat_duration = Fraction(beat_duration)
 
