@@ -2,7 +2,7 @@
 Parsing tools for turning strings into 5-limit pitch vectors
 """
 from fractions import Fraction
-from numpy import array
+from numpy import array, zeros_like
 from note import Note, LYDIAN
 
 
@@ -362,6 +362,8 @@ def parse(text, beat_duration=Fraction(1), initial_pitch=(0, 0, 0), extra_interv
 
     result = []
     pitch = array(initial_pitch)
+    octave = zeros_like(pitch)
+    octave[0] = 1
     t = Fraction(0)
     for token in text.strip().split():
         chord_token = "U"
@@ -393,10 +395,10 @@ def parse(text, beat_duration=Fraction(1), initial_pitch=(0, 0, 0), extra_interv
 
             inversion = int(inversion_token)
             for i in range(inversion):
-                chord[i] += array([1, 0, 0])
+                chord[i] += octave
             if inversion:
                 for i in range(len(chord)):  #pylint: disable=consider-using-enumerate
-                    chord[i] -= array([1, 0, 0])
+                    chord[i] -= octave
 
             pitch = pitch + interval
 

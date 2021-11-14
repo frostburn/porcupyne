@@ -5,14 +5,18 @@ Tools for tempering out commas from musical tunings, particularly 5-limit just i
 from collections import defaultdict
 from fractions import Fraction
 from functools import reduce
-from itertools import combinations
-from numpy import log, dot, array, cross, absolute, sign
+from itertools import combinations, product
+from numpy import log, dot, array, cross, absolute, sign, prod, arange
 from numpy.linalg import norm
 from util import gcd
 
 JI_5LIMIT = log(array([2, 3, 5]))
+JI_7LIMIT = log(array([2, 3, 5, 7]))
+JI_11LIMIT = log(array([2, 3, 5, 7, 11]))
 JI_ISLAND = log(array([2, 3, 13/5]))
 
+
+# 5-limit
 COMMA_BY_HOROGRAM = {
     # Exotemperaments
     "father": (4, -1, -1),
@@ -132,6 +136,15 @@ ISLAND_PERGEN_BY_HOROGRAM = {
     "barbados": ((1, 0, 0), (0, 1, -1)),
 }
 
+# 7-limit
+COMMA_LIST_BY_HOROGRAM = {
+    "srutal": ((11, -4, -2, 0), (-1, -7, 4, 1)),
+}
+
+PERGEN_7LIMIT_BY_HOROGRAM = {
+    "srutal": ((-5, 2, 1, 0), (4, -1, -1, 0)),
+}
+
 
 def temper(comma_list, just_mapping=JI_5LIMIT, num_iterations=1000):
     """
@@ -241,6 +254,40 @@ def rank2_pergen(comma, mapping=None, search_depth=10):
             inverted -= period
         if dot(inverted, mapping) < dot(generator, mapping):
             generator = inverted
+    return period, generator
+
+
+def guess_pergen(comma_list, mapping, search_depth=10, generation_depth=None, tolerance=1e-6):
+    if generation_depth is None:
+        generation_depth = search_depth
+    sub_edos = []
+    for comma in comma_list:
+        sub_edos.append(abs(reduce(gcd, comma[1:])))
+    edo = prod(sub_edos) // reduce(gcd, sub_edos)
+
+    comma_list = [array(comma) for comma in comma_list]
+
+    search_space = arange(-search_depth, search_depth+1)
+
+    period = None
+    for candidate in product(search_space, repeat=len(mapping)):
+        candidate = array(candidate)
+        if abs(dot(candidate*edo, mapping) - mapping[0]) < tolerance:
+            if period is None or abs(candidate).sum() < abs(period).sum():
+                period = candidate
+
+    modulus = mapping[0] / edo
+    generator = None
+    for candidate in product(search_space, repeat=len(mapping)):
+        candidate = array(candidate)
+        generates = array([False] * (len(mapping)-1))
+        for multiplier in range(-generation_depth, generation_depth+1):  # pylint: disable=invalid-unary-operand-type
+            for i, coord in enumerate(mapping[1:]):
+                if abs(dot(candidate*multiplier, mapping)%modulus - coord%modulus) < tolerance:
+                    generates[i] = True
+        if generates.all() and (generator is None or abs(candidate).sum() < abs(generator).sum()):
+            generator = candidate
+
     return period, generator
 
 
@@ -356,6 +403,20 @@ def canonize2(twos, threes, fives, horogram="JI"):
 
     if horogram == "JI":
         return (twos, threes, fives)
+
+    raise ValueError("Unrecognized temperament")
+
+
+def canonize_7limit(threes, fives, sevens, horogram="JI"):
+    if horogram == "srutal":
+        threes += 7*sevens
+        fives -= 4*sevens
+        if fives % 2:
+            return (threes - 2*(fives-1), 1, 0)
+        return (threes - 2*fives, 0, 0)
+
+    if horogram == "JI":
+        return (threes, fives, sevens)
 
     raise ValueError("Unrecognized temperament")
 

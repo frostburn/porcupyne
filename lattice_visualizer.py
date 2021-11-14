@@ -290,6 +290,47 @@ def half_sharp(x, y, arrows=0, thickness=0.1):
     return result
 
 
+# TODO: Full sagittal notation
+def sagittal7(x, y, thickness=0.1):
+    return logical_or(
+        logical_and(abs(x) < 0.5*thickness, abs(y) < 1 + thickness),
+        logical_and(abs(x-0.5) < 0.5, abs(1.25*x**6+y-1) < thickness)
+    )
+
+
+def double_sagittal7(x, y, thickness=0.1):
+    arc = 1.25*x**6 + y - 1
+    return logical_or(
+        logical_and(
+            abs(abs(x-0.3)-0.3) < 0.5*thickness,
+            logical_and(y > -1 - thickness, arc < thickness)
+        ),
+        logical_and(abs(x-0.5) < 0.5, abs(arc) < thickness)
+    )
+
+
+def triple_sagittal7(x, y, thickness=0.1):
+    arc = 1.25*x**6 + y - 1
+    return logical_or(
+        logical_and(
+            logical_or(abs(abs(x-0.3)-0.3) < 0.5*thickness, abs(x-0.3) < 0.5*thickness),
+            logical_and(y > -1 - thickness, arc < thickness)
+        ),
+        logical_and(abs(x-0.5) < 0.5, abs(arc) < thickness)
+    )
+
+
+def quadruple_sagittal7(x, y, thickness=0.1):
+    arc = 1.25*x**6 + y - 1
+    return logical_or(
+        logical_and(
+            abs(abs(abs(x-0.33)-0.22)-0.11) < 0.5*thickness,
+            logical_and(y > -1 - thickness, arc < thickness)
+        ),
+        logical_and(abs(x-0.5) < 0.5, abs(arc) < thickness)
+    )
+
+
 LETTERS = {
     "F": letter_F,
     "C": letter_C,
