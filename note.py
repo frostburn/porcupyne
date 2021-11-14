@@ -4,7 +4,7 @@ Notation and containers for multi-dimensional MIDI style data
 """
 from functools import total_ordering
 from numpy import array, dot, exp
-from temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND, JI_7LIMIT, JI_11LIMIT
+from temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND, JI_7LIMIT, JI_11LIMIT, JI_3_7, canonize_3_7, canonize2_3_7
 from util import note_unicode
 
 
@@ -101,6 +101,30 @@ def notate_island(threes, supermajors, twos=None, horogram="JI", flatward=False)
     raise ValueError("Unknown temperament")
 
 
+def notate_3_7(threes, sevens, twos=None, horogram="JI"):
+    """
+    Gives the notation for a 2.3.7 subgroup pitch vector in terms of letter, sharp signs, (sagittal septimal) arrows and octaves.
+    """
+    if horogram == "JI":
+        index = LYDIAN_INDEX_A + threes - sevens*2
+        sharps = index // len(LYDIAN)
+        letter = LYDIAN[index % len(LYDIAN)]
+        arrows = -sevens
+
+    if twos is None:
+        if horogram == "JI":
+            return letter, sharps, arrows
+        threes, sevens = canonize_3_7(threes, sevens, horogram=horogram)
+        return notate_3_7(threes, sevens, horogram="JI")
+
+    if horogram == "JI":
+        edo12 = twos*12 + threes*19 + sevens*34
+        octaves = REFERENCE_OCTAVE + (edo12 + 9)//12
+        return letter, sharps, arrows, octaves
+    twos, threes, sevens = canonize2_3_7(twos, threes, sevens, horogram=horogram)
+    return notate_3_7(threes, sevens, twos=twos, horogram="JI")
+
+
 def note_unicode_5limit(threes, fives, twos=None, horogram="JI"):
     octaves = None
     if twos is None:
@@ -154,6 +178,9 @@ PITCH_CONTEXT_7LIMIT = PitchContext(JI_7LIMIT)
 
 
 PITCH_CONTEXT_11LIMIT = PitchContext(JI_11LIMIT)
+
+
+PITCH_CONTEXT_3_7 = PitchContext(JI_3_7)
 
 
 @total_ordering

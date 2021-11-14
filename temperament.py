@@ -10,9 +10,13 @@ from numpy import log, dot, array, cross, absolute, sign, prod, arange
 from numpy.linalg import norm
 from util import gcd
 
+# Prime limit mappings
 JI_5LIMIT = log(array([2, 3, 5]))
 JI_7LIMIT = log(array([2, 3, 5, 7]))
 JI_11LIMIT = log(array([2, 3, 5, 7, 11]))
+
+# Subgroups
+JI_3_7 = log(array([2, 3, 7]))
 JI_ISLAND = log(array([2, 3, 13/5]))
 
 
@@ -143,6 +147,26 @@ COMMA_LIST_BY_HOROGRAM = {
 
 PERGEN_7LIMIT_BY_HOROGRAM = {
     "srutal": ((-5, 2, 1, 0), (4, -1, -1, 0)),
+}
+
+# 2.3.7 subgroup
+COMMA_3_7_BY_HOROGRAM = {
+    "archy": (6, -2, -1),
+    "slendric": (-10, 1, 3),
+    "eric": (7, 8, -7),
+    "ennealimmal": (-11, -9, 9),
+    "buzzardismic": (16, -3, -4),
+    "cloudy": (-14, 0, 5),
+}
+
+
+PERGEN_3_7_BY_HOROGRAM = {
+    "archy": ((1, 0, 0), (2, -1, 0)),
+    "slendric": ((1, 0, 0), (3, 0, -1)),
+    "eric": ((1, 0, 0), (-1, -1, 1)),
+    "ennealimmal": ((5, 4, -4), (-26, -19, 20)),
+    "buzzardismic": ((1, 0, 0), (-4, 1, 1)),
+    "cloudy": ((3, 0, -1), (-4, -1, 2)),
 }
 
 
@@ -417,6 +441,48 @@ def canonize_7limit(threes, fives, sevens, horogram="JI"):
 
     if horogram == "JI":
         return (threes, fives, sevens)
+
+    raise ValueError("Unrecognized temperament")
+
+
+def canonize_3_7(threes, sevens, horogram="JI"):
+    # pylint: disable=invalid-name
+    if horogram == "archy":
+        return (threes - 2*sevens, 0)
+
+    if horogram == "slendric":
+        return (0, sevens - 3*threes)
+
+    if horogram == "eric":
+        m = sevens - ((sevens + 3)//7)*7
+        return (threes + 8*(sevens - m)//7, m)
+
+    if horogram == "ennealimmal":
+        index = sevens - threes
+        ortho = threes + sevens
+        index -= ((index + 4)//9)*9
+        return (ortho - index, index + ortho)
+
+    if horogram == "buzzardismic":
+        m = sevens - ((sevens + 2)//4)*4
+        return (threes - 3*(sevens - m)//4, m)
+
+    if horogram == "cloudy":
+        return (threes, sevens - ((sevens+2)//5)*5)
+
+    if horogram == "JI":
+        return (threes, sevens)
+
+    raise ValueError("Unrecognized temperament")
+
+
+def canonize2_3_7(twos, threes, sevens, horogram="JI"):
+    # pylint: disable=invalid-name
+    if horogram == "slendric":
+        return (twos + 10*threes, 0, sevens - 3*threes)
+
+    if horogram == "JI":
+        return (twos, threes, sevens)
 
     raise ValueError("Unrecognized temperament")
 

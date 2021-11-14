@@ -2,8 +2,8 @@
 import argparse
 from pylab import *
 from lattice_visualizer import hex_grid, square_grid, hex_highlight, square_highlight, make_picture_frame, square_pergen_grid
-from temperament import COMMA_BY_HOROGRAM, PERGEN_BY_HOROGRAM, ISLAND_COMMA_BY_HOROGRAM, ISLAND_PERGEN_BY_HOROGRAM
-from note import notate, notate_island
+from temperament import COMMA_BY_HOROGRAM, PERGEN_BY_HOROGRAM, ISLAND_COMMA_BY_HOROGRAM, ISLAND_PERGEN_BY_HOROGRAM, COMMA_3_7_BY_HOROGRAM, PERGEN_3_7_BY_HOROGRAM
+from note import notate, notate_island, notate_3_7
 
 
 def main():
@@ -16,6 +16,8 @@ def main():
     parser.add_argument('--generator', nargs='+', type=int)
     parser.add_argument('--hex', action='store_true')
     parser.add_argument('--island', action='store_true')
+    parser.add_argument('--za', action='store_true')
+    parser.add_argument('--zoom-out', type=float, default=1.0)
     args = parser.parse_args()
 
     comma = None
@@ -25,6 +27,8 @@ def main():
     if args.temperament != "JI":
         if args.island:
             comma = ISLAND_COMMA_BY_HOROGRAM[args.temperament]
+        elif args.za:
+            comma = COMMA_3_7_BY_HOROGRAM[args.temperament]
         else:
             comma = COMMA_BY_HOROGRAM[args.temperament]
     if args.pergen:
@@ -32,19 +36,23 @@ def main():
             raise ValueError("Custom period or generator provided when canonical was requested")
         if args.island:
             period, generator = ISLAND_PERGEN_BY_HOROGRAM[args.temperament]
+        elif args.za:
+            period, generator = PERGEN_3_7_BY_HOROGRAM[args.temperament]
         else:
             period, generator = PERGEN_BY_HOROGRAM[args.temperament]
 
     if period is None and generator is None:
         if args.island:
             notation = lambda threes, supermajors: notate_island(threes, supermajors, horogram=args.temperament)
+        elif args.za:
+            notation = lambda threes, sevens: notate_3_7(threes, sevens, horogram=args.temperament)
         else:
             notation = lambda threes, fives: notate(threes, fives, horogram=args.temperament)
 
         if args.hex:
-            x = linspace(-10, 10, 1080)
+            x = linspace(-10*args.zoom_out, 10*args.zoom_out, 1080)
         else:
-            x = linspace(-5, 5, 1080)
+            x = linspace(-5*args.zoom_out, 5*args.zoom_out, 1080)
         x, y = meshgrid(x, -x)  # pylint: disable=invalid-unary-operand-type
 
 
@@ -65,13 +73,15 @@ def main():
     else:
         if args.island:
             notation = lambda pitch: notate_island(pitch[1], pitch[2], twos=pitch[0], horogram=args.temperament)
+        elif args.za:
+            notation = lambda pitch: notate_3_7(pitch[1], pitch[2], twos=pitch[0], horogram=args.temperament)
         else:
             notation = lambda pitch: notate(pitch[1], pitch[2], twos=pitch[0], horogram=args.temperament)
 
         period = array(period)
         generator = array(generator)
 
-        x = linspace(-5, 5, 1080)
+        x = linspace(-5*args.zoom_out, 5*args.zoom_out, 1080)
         x, y = meshgrid(x, -x)  # pylint: disable=invalid-unary-operand-type
 
         grid = square_pergen_grid(x, y, period, generator, notation=notation)
