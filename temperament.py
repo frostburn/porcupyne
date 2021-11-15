@@ -62,6 +62,7 @@ COMMA_BY_HOROGRAM = {
     "parakleismic": (8, 14, -13),
     "valentine": (13, 5, -9),
     "sevond": (6, -14, 7),
+    "miracle": (-25, 7, 6),
 
     # Special
     "bohpieric": (0, -19, 13),
@@ -82,6 +83,7 @@ COMMA_NAME_BY_HOROGRAM = {
     "vishnu": "vishnuzma",
     "parakleismic": "parakleisma",
     "bohpieric": "bohpier",
+    "miracle": "ampersand",
 }
 
 
@@ -123,6 +125,7 @@ PERGEN_BY_HOROGRAM = {
     "sevond": ((1, -2, 1), (-5, 9, -4)),
     "bohpieric": ((1, 0, 0), (0, 3, -2)),
     "wronecki": ((1, -2, 1), (-4, 7, -3)),
+    "miracle": ((1, 0, 0), (4, -1, -1)),
 }
 
 
@@ -143,10 +146,12 @@ ISLAND_PERGEN_BY_HOROGRAM = {
 # 7-limit
 COMMA_LIST_BY_HOROGRAM = {
     "srutal": ((11, -4, -2, 0), (-1, -7, 4, 1)),
+    "miracle": ((-10, 1, 0, 3), (-5, 2, 2, -1)),
 }
 
 PERGEN_7LIMIT_BY_HOROGRAM = {
     "srutal": ((-5, 2, 1, 0), (4, -1, -1, 0)),
+    "miracle": ((1, 0, 0, 0), (0, -1, -1, 0)),
 }
 
 # 2.3.7 subgroup
@@ -167,6 +172,21 @@ PERGEN_3_7_BY_HOROGRAM = {
     "ennealimmal": ((5, 4, -4), (-26, -19, 20)),
     "buzzardismic": ((1, 0, 0), (-4, 1, 1)),
     "cloudy": ((3, 0, -1), (-4, -1, 2)),
+}
+
+
+# 11-limit
+COMMA_LIST_11LIMIT_BY_HOROGRAM = {
+    # Minimax error less than 1 cent
+    "slendric_unimarv": ((-7, -1, 1, 1, 1), (-10, 1, 0, 3, 0), (-5, 2, 2, -1, 0)),
+    "keen_slendric": ((-7, -1, 1, 1, 1), (-10, 1, 0, 3, 0), (-12, 1, 3, 0, 1)),
+    "slendric_marvel": ((-10, 1, 0, 3, 0), (-5, 2, 2, -1, 0), (-12, 1, 3, 0, 1)),
+}
+
+PERGEN_11LIMIT_BY_HOROGRAM = {
+    "slendric_unimarv": ((1, 0, 0, 0, 0), (0, -1, -1, 0, 0)),
+    "keen_slendric": ((1, 0, 0, 0, 0), (0, -1, -1, 0, 0)),
+    "slendric_marvel": ((1, 0, 0, 0, 0), (0, -1, -1, 0, 0)),
 }
 
 
@@ -404,6 +424,10 @@ def canonize(threes, fives, horogram="JI"):
         m = fives - ((fives + 3)//6)*6
         return (threes + 2*(fives-m), m)
 
+    if horogram == "miracle":
+        m = fives - ((fives + 3)//6)*6
+        return (threes - 7*(fives - m)//6, m)
+
     if horogram == "JI":
         return (threes, fives)
 
@@ -487,6 +511,19 @@ def canonize2_3_7(twos, threes, sevens, horogram="JI"):
     raise ValueError("Unrecognized temperament")
 
 
+def canonize_11limit(threes, fives, sevens, elevens, horogram="JI"):
+    if horogram == "slendric_unimarv":
+        sevens -= elevens
+        fives += 2*sevens - elevens
+        threes += 2*sevens + elevens
+        m = fives - ((fives + 3)//6)*6
+        return (threes - 7*(fives - m)//6, m, 0, 0)
+    if horogram == "JI":
+        return (threes, fives, sevens, elevens)
+
+    raise ValueError("Unrecognized temperament")
+
+
 def mod_comma(pitch, comma):
     """
     Calculate pitch modulo comma
@@ -520,15 +557,13 @@ def mod_comma(pitch, comma):
 # TODO: def comma_equals(pitch_a, pitch_b, comma_list, persistence=10):
 
 
-def find_subset_commas(max_complexity, factors, threshold=Fraction(10, 9), manhattan=False):
+def find_subset_commas(max_complexity, factors, threshold=Fraction(10, 9)):
     """
     Find intervals smaller than a given threshold between factors less complex than the given limit
     """
     factors = [Fraction(f) for f in factors]
     result = []
     def search(num_remaining, exponents):
-        if manhattan and absolute(exponents[1:]).sum() > max_complexity:  # Assumes factors[0] is the period
-            return
         if num_remaining:
             for exponent in range(-max_complexity, max_complexity+1):
                 search(num_remaining - 1, exponents + [exponent])
@@ -540,6 +575,36 @@ def find_subset_commas(max_complexity, factors, threshold=Fraction(10, 9), manha
                 comma *= factor**exponent
             if 1 < comma < threshold:
                 result.append((comma, array(exponents)))
+    search(len(factors), [])
+    return result
+
+
+def find_subset_commas_manhattan(max_complexity, factors, threshold=Fraction(10, 9), period=2):
+    period = Fraction(2)
+    factors = [Fraction(f) for f in factors]
+    result = []
+    search_space = arange(-max_complexity, max_complexity+1)
+    def search(num_remaining, exponents):
+        if absolute(exponents).sum() > max_complexity:
+            return
+        if num_remaining:
+            for exponent in search_space:
+                search(num_remaining - 1, exponents + [exponent])
+        else:
+            if reduce(gcd, exponents) not in (-1, 1):
+                return
+            comma = Fraction(1)
+            for factor, exponent in zip(factors, exponents):
+                comma *= factor**exponent
+            num_periods = 0
+            while comma >= 1:
+                comma /= period
+                num_periods -= 1
+            while comma < 1:
+                comma *= period
+                num_periods += 1
+            if comma < threshold:
+                result.append((comma, array([num_periods] + exponents)))
     search(len(factors), [])
     return result
 

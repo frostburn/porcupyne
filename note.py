@@ -114,6 +114,13 @@ def notate_3_7(threes, sevens, twos=None, horogram="JI"):
     if twos is None:
         if horogram == "JI":
             return letter, sharps, arrows
+        if horogram == "slendric":
+            fifths_5edo = [0, 2, 4, 1, 3]
+            index = sevens -3*threes
+            edo5 = (threes*8 + sevens*14) % 5
+            archy = (fifths_5edo[edo5] + 2) % 5 - 2
+            arrows = index // 5
+            return notate_3_7(archy - arrows*2, arrows, horogram="JI")
         threes, sevens = canonize_3_7(threes, sevens, horogram=horogram)
         return notate_3_7(threes, sevens, horogram="JI")
 
