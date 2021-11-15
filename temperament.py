@@ -6,7 +6,7 @@ from collections import defaultdict
 from fractions import Fraction
 from functools import reduce
 from itertools import combinations, product
-from numpy import log, dot, array, cross, absolute, sign, prod, arange
+from numpy import log, dot, array, cross, absolute, sign, prod, arange, exp
 from numpy.linalg import norm
 from util import gcd
 
@@ -151,7 +151,7 @@ COMMA_LIST_BY_HOROGRAM = {
 
 PERGEN_7LIMIT_BY_HOROGRAM = {
     "srutal": ((-5, 2, 1, 0), (4, -1, -1, 0)),
-    "miracle": ((1, 0, 0, 0), (0, -1, -1, 0)),
+    "miracle": ((1, 0, 0, 0), (4, -1, -1, 0)),
 }
 
 # 2.3.7 subgroup
@@ -184,9 +184,9 @@ COMMA_LIST_11LIMIT_BY_HOROGRAM = {
 }
 
 PERGEN_11LIMIT_BY_HOROGRAM = {
-    "slendric_unimarv": ((1, 0, 0, 0, 0), (0, -1, -1, 0, 0)),
-    "keen_slendric": ((1, 0, 0, 0, 0), (0, -1, -1, 0, 0)),
-    "slendric_marvel": ((1, 0, 0, 0, 0), (0, -1, -1, 0, 0)),
+    "slendric_unimarv": ((1, 0, 0, 0, 0), (4, -1, -1, 0, 0)),
+    "keen_slendric": ((1, 0, 0, 0, 0), (4, -1, -1, 0, 0)),
+    "slendric_marvel": ((1, 0, 0, 0, 0), (4, -1, -1, 0, 0)),
 }
 
 
@@ -512,6 +512,7 @@ def canonize2_3_7(twos, threes, sevens, horogram="JI"):
 
 
 def canonize_11limit(threes, fives, sevens, elevens, horogram="JI"):
+    # pylint: disable=invalid-name
     if horogram == "slendric_unimarv":
         sevens -= elevens
         fives += 2*sevens - elevens
@@ -624,3 +625,25 @@ def tabulate_meets(commas):
             mapping //= reduce(gcd, mapping)
             meets_by_edo[mapping[0]].append((mapping, comma_a, comma_b))
     return meets_by_edo
+
+
+def harmonic_intervals(mapping, period, generator, generation_depth=10, threshold=log(2)/1200):
+    """
+    Find generated pitch vectors close to JI harmonics
+    """
+    period = array(period)
+    generator = array(generator)
+
+    harmonics = {}
+
+    for i in range(-generation_depth, generation_depth+1):
+        for j in range(-generation_depth, generation_depth+1):
+            pitch = period*i + generator*j
+            log_ratio = dot(pitch, mapping)
+            harmonic = int(round(exp(log_ratio)))
+            if harmonic > 0 and abs(log(harmonic) - log_ratio) < threshold:
+                if harmonic in harmonics:
+                    raise ValueError("Ambiguous mapping for harmonic {} found".format(harmonic))
+                harmonics[harmonic] = pitch
+
+    return harmonics
