@@ -4,7 +4,7 @@ Notation and containers for multi-dimensional MIDI style data
 """
 from functools import total_ordering
 from numpy import array, dot, exp
-from temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND, JI_7LIMIT, JI_11LIMIT, JI_3_7, canonize_3_7, canonize2_3_7, canonize_7_11
+from temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND, JI_7LIMIT, JI_11LIMIT, JI_3_7, canonize_3_7, canonize2_3_7, canonize_7_11, JI_7_11
 from util import note_unicode
 
 
@@ -284,6 +284,9 @@ PITCH_CONTEXT_11LIMIT = PitchContext(JI_11LIMIT)
 
 
 PITCH_CONTEXT_3_7 = PitchContext(JI_3_7)
+
+
+PITCH_CONTEXT_7_11 = PitchContext(JI_7_11)
 
 
 @total_ordering
