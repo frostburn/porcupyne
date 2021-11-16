@@ -4,7 +4,7 @@ Notation and containers for multi-dimensional MIDI style data
 """
 from functools import total_ordering
 from numpy import array, dot, exp
-from temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND, JI_7LIMIT, JI_11LIMIT, JI_3_7, canonize_3_7, canonize2_3_7
+from temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND, JI_7LIMIT, JI_11LIMIT, JI_3_7, canonize_3_7, canonize2_3_7, canonize_7_11
 from util import note_unicode
 
 
@@ -130,6 +130,102 @@ def notate_3_7(threes, sevens, twos=None, horogram="JI"):
         return letter, sharps, arrows, octaves
     twos, threes, sevens = canonize2_3_7(twos, threes, sevens, horogram=horogram)
     return notate_3_7(threes, sevens, twos=twos, horogram="JI")
+
+
+DARK_24EDO = {
+    0: ("C", -0.0),
+    1: ("D", -1.5),
+    2: ("D", -1.0),
+    3: ("D", -0.5),
+    4: ("D", -0.0),
+    5: ("E", -1.5),
+    6: ("E", -1.0),
+    7: ("E", -0.5),
+    8: ("E", -0.0),
+    9: ("F", -0.5),
+    10: ("F", -0.0),
+    11: ("G", -1.5),
+    12: ("G", -1.0),
+    13: ("G", -0.5),
+    14: ("G", -0.0),
+    15: ("A", -1.5),
+    16: ("A", -1.0),
+    17: ("A", -0.5),
+    18: ("A", -0.0),
+    19: ("B", -1.5),
+    20: ("B", -1.0),
+    21: ("B", -0.5),
+    22: ("B", -0.0),
+    23: ("C", -0.5),
+}
+
+LIGHT_24EDO = {
+    0: ("C", 0.0),
+    1: ("C", 0.5),
+    2: ("C", 1.0),
+    3: ("C", 1.5),
+    4: ("D", 0.0),
+    5: ("D", 0.5),
+    6: ("D", 1.0),
+    7: ("D", 1.5),
+    8: ("E", 0.0),
+    9: ("E", 0.5),
+    10: ("F", 0.0),
+    11: ("F", 0.5),
+    12: ("F", 1.0),
+    13: ("F", 1.5),
+    14: ("G", 0.0),
+    15: ("G", 0.5),
+    16: ("G", 1.0),
+    17: ("G", 1.5),
+    18: ("A", 0.0),
+    19: ("A", 0.5),
+    20: ("A", 1.0),
+    21: ("A", 1.5),
+    22: ("B", 0.0),
+    23: ("B", 0.5),
+}
+
+
+def notate_7_11(sevens, elevens, twos=None, horogram="JI"):
+    """
+    Gives the notation for a 2.7.11 subgroup pitch vector in terms of letter, (half) sharp signs, (frostburn?) arrows and octaves.
+    """
+    # Note: Centers around C  TODO: Consider centering around A
+    if horogram == "JI":
+        index = elevens + 4*sevens
+        edo24 = 83*index
+        if index < 0:
+            stratum = 1 + index // 24
+            letter, sharps = DARK_24EDO[(edo24 - 4*stratum)%len(DARK_24EDO)]
+            if stratum: # Preserve signed zeros
+                sharps += 2*stratum
+        else:
+            stratum = index // 24
+            # Note: Theres some room to do {edo24 - 2*stratum; sharps += stratum} here as B# is unused, but not enough it turns out.
+            letter, sharps = LIGHT_24EDO[(edo24 - 4*stratum)%len(LIGHT_24EDO)]
+            sharps += 2*stratum
+        arrows = sevens
+
+    if twos is None:
+        if horogram == "JI":
+            return letter, sharps, arrows
+        if horogram == "orga":
+            superfourths_31edo = [0, 20, 9, 29, 18, 7, 27, 16, 5, 25, 14, 3, 23, 12, 1, 21, 10, 30, 19, 8, 28, 17, 6, 26, 15, 4, 24, 13, 2, 22, 11]
+            index = sevens + 8*elevens
+            edo31 = (sevens*87 + elevens*107) % 31
+            frostburn = (superfourths_31edo[edo31] + 11) % 31 - 11
+            arrows = index // 31
+            return notate_7_11(-arrows, frostburn + arrows*4, horogram="JI")
+        sevens, elevens = canonize_7_11(sevens, elevens, horogram=horogram)
+        return notate_7_11(sevens, elevens, horogram="JI")
+
+    if horogram == "JI":
+        edo24 = 24*twos + 83*elevens + 67*sevens  # TODO: Figure out if this is right at all
+        octaves = REFERENCE_OCTAVE + edo24//24
+        return letter, sharps, arrows, octaves
+
+    raise ValueError("Unknown temperament")
 
 
 def note_unicode_5limit(threes, fives, twos=None, horogram="JI"):

@@ -3,7 +3,8 @@ import argparse
 from pylab import *
 from lattice_visualizer import hex_grid, square_grid, hex_highlight, square_highlight, make_picture_frame, square_pergen_grid
 from temperament import COMMA_BY_HOROGRAM, PERGEN_BY_HOROGRAM, ISLAND_COMMA_BY_HOROGRAM, ISLAND_PERGEN_BY_HOROGRAM, COMMA_3_7_BY_HOROGRAM, PERGEN_3_7_BY_HOROGRAM
-from note import notate, notate_island, notate_3_7
+from temperament import COMMA_7_11_BY_HOROGRAM, PERGEN_7_11_BY_HOROGRAM
+from note import notate, notate_island, notate_3_7, notate_7_11
 
 
 def main():
@@ -17,6 +18,7 @@ def main():
     parser.add_argument('--hex', action='store_true')
     parser.add_argument('--island', action='store_true')
     parser.add_argument('--za', action='store_true')
+    parser.add_argument('--zalanowa', action='store_true')
     parser.add_argument('--zoom-out', type=float, default=1.0)
     parser.add_argument('--anti-alias', type=int, default=1)
     args = parser.parse_args()
@@ -30,6 +32,8 @@ def main():
             comma = ISLAND_COMMA_BY_HOROGRAM[args.temperament]
         elif args.za:
             comma = COMMA_3_7_BY_HOROGRAM[args.temperament]
+        elif args.zalanowa:
+            comma = COMMA_7_11_BY_HOROGRAM[args.temperament]
         else:
             comma = COMMA_BY_HOROGRAM[args.temperament]
     if args.pergen:
@@ -39,6 +43,8 @@ def main():
             period, generator = ISLAND_PERGEN_BY_HOROGRAM[args.temperament]
         elif args.za:
             period, generator = PERGEN_3_7_BY_HOROGRAM[args.temperament]
+        elif args.zalanowa:
+            period, generator = PERGEN_7_11_BY_HOROGRAM[args.temperament]
         else:
             period, generator = PERGEN_BY_HOROGRAM[args.temperament]
 
@@ -47,6 +53,8 @@ def main():
             notation = lambda threes, supermajors: notate_island(threes, supermajors, horogram=args.temperament)
         elif args.za:
             notation = lambda threes, sevens: notate_3_7(threes, sevens, horogram=args.temperament)
+        elif args.zalanowa:
+            notation = lambda sevens, elevens: notate_7_11(sevens, elevens, horogram=args.temperament)
         else:
             notation = lambda threes, fives: notate(threes, fives, horogram=args.temperament)
 
@@ -81,6 +89,8 @@ def main():
             notation = lambda pitch: notate_island(pitch[1], pitch[2], twos=pitch[0], horogram=args.temperament)
         elif args.za:
             notation = lambda pitch: notate_3_7(pitch[1], pitch[2], twos=pitch[0], horogram=args.temperament)
+        elif args.zalanowa:
+            notation = lambda pitch: notate_7_11(pitch[1], pitch[2], twos=pitch[0], horogram=args.temperament)
         else:
             notation = lambda pitch: notate(pitch[1], pitch[2], twos=pitch[0], horogram=args.temperament)
 

@@ -17,6 +17,7 @@ JI_11LIMIT = log(array([2, 3, 5, 7, 11]))
 
 # Subgroups
 JI_3_7 = log(array([2, 3, 7]))
+JI_7_11 = log(array([2, 7, 11]))
 JI_ISLAND = log(array([2, 3, 13/5]))
 
 
@@ -174,6 +175,22 @@ PERGEN_3_7_BY_HOROGRAM = {
     "cloudy": ((3, 0, -1), (-4, -1, 2)),
 }
 
+# 2.7.11 subgroup
+COMMA_7_11_BY_HOROGRAM = {
+    "orgone": (16, -2, -3),
+    "frostburn?": (-11, -1, 4),
+    "orga": (19, -8, 1),
+    "nism?": (-27, 1, 7),
+}
+
+
+PERGEN_7_11_BY_HOROGRAM = {
+    "orgone": ((1, 0, 0), (-6, 1, 1)),
+    "frostburn?": ((1, 0, 0), (-3, 0, 1)),
+    "orga": ((1, 0, 0), (3, -1, 0)),
+    "nism?": ((1, 0, 0), (-3, 0, 1)),
+}
+
 
 # 11-limit
 COMMA_LIST_11LIMIT_BY_HOROGRAM = {
@@ -322,8 +339,8 @@ def guess_pergen(comma_list, mapping, search_depth=10, generation_depth=None, to
 
     modulus = mapping[0] / edo
     generator = None
-    for candidate in product(search_space, repeat=len(mapping)):
-        candidate = array(candidate)
+    for candidate in product(search_space, repeat=len(mapping)-1):
+        candidate = array([0] + candidate)
         generates = array([False] * (len(mapping)-1))
         for multiplier in range(-generation_depth, generation_depth+1):  # pylint: disable=invalid-unary-operand-type
             for i, coord in enumerate(mapping[1:]):
@@ -507,6 +524,27 @@ def canonize2_3_7(twos, threes, sevens, horogram="JI"):
 
     if horogram == "JI":
         return (twos, threes, sevens)
+
+    raise ValueError("Unrecognized temperament")
+
+
+def canonize_7_11(sevens, elevens, horogram="JI"):
+    # pylint: disable=invalid-name
+    if horogram == "orgone":
+        m = sevens % 2
+        return (m, elevens - 3*(sevens - m)//2)
+
+    if horogram == "frostburn?":
+        return (0, elevens + 4*sevens)
+
+    if horogram == "orga":
+        return (sevens + 8*elevens, 0)
+
+    if horogram == "nism?":
+        return (0, elevens - 7*sevens)
+
+    if horogram == "JI":
+        return (sevens, elevens)
 
     raise ValueError("Unrecognized temperament")
 

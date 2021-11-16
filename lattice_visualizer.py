@@ -1,5 +1,5 @@
 # pylint: disable=invalid-name, missing-function-docstring
-from numpy import logical_and, logical_or, logical_xor, sqrt, stack, clip, maximum, sign, floor, linspace, meshgrid, minimum
+from numpy import logical_and, logical_or, logical_xor, sqrt, stack, clip, maximum, sign, floor, linspace, meshgrid, minimum, copysign
 from numpy.random import random
 from note import notate
 
@@ -216,6 +216,19 @@ def natural(x, y, arrows=0, thickness=0.1):
     return result
 
 
+def dark_natural(x, y, arrows=0, thickness=0.1):
+    result = logical_and(abs(x+0.4) < 0.5*thickness, abs(y-0.2) < 0.8)
+    result = logical_or(result, logical_and(abs(x-0.4) < 0.5*thickness, abs(y+0.2) < 0.8))
+    result = logical_or(result, logical_and(abs(y-0.5*x) < 0.4+thickness, abs(x) < 0.4+thickness*0.5))
+    if arrows > 0:
+        for i in range(arrows):
+            result = logical_or(result, arrow(2*(x+0.4), -2*(y-1+0.3*i)))
+    elif arrows < 0:
+        for i in range(-arrows):
+            result = logical_or(result, arrow(2*(x-0.4), 2*(y+1-0.3*i)))
+    return result
+
+
 def sharp(x, y, arrows=0, thickness=0.1):
     result = logical_and(abs(abs(x)-0.4) < 0.5*thickness, abs(y) < 1)
     result = logical_or(result, logical_and(abs(-0.35+abs(y-0.5*x)) < thickness, abs(x) < 0.6+thickness*0.5))
@@ -388,6 +401,10 @@ def number_symbol(x, y, number, thickness):
 def accidental_symbol(x, y, sharps, arrows, thickness):
     bg = 0*x
 
+    has_dark_natural = False
+    if copysign(1, sharps) < 0 and sharps == 0.0:
+        has_dark_natural = True
+
     has_half_sharp = False
     has_one_and_a_half_sharp = False
     has_half_flat = False
@@ -435,7 +452,10 @@ def accidental_symbol(x, y, sharps, arrows, thickness):
     y = y[bbox]
 
     if sharps == 0 and not (has_half_flat or has_half_sharp):
-        result = natural(x-0.5, y, arrows, thickness)
+        if has_dark_natural:
+            result = dark_natural(x-0.5, y, arrows, thickness)
+        else:
+            result = natural(x-0.5, y, arrows, thickness)
         arrows = 0
 
     elif sharps > 0 or has_half_sharp:
