@@ -19,6 +19,7 @@ JI_11LIMIT = log(array([2, 3, 5, 7, 11]))
 JI_3_7 = log(array([2, 3, 7]))
 JI_7_11 = log(array([2, 7, 11]))
 JI_ISLAND = log(array([2, 3, 13/5]))
+JI_3_5_7_13 = log(array([2, 3, 5, 7, 13]))
 
 
 # 5-limit
@@ -207,6 +208,21 @@ PERGEN_11LIMIT_BY_HOROGRAM = {
 }
 
 
+# 2.3.5.7.13 subgroup
+COMMA_LIST_3_5_7_13_BY_HOROGRAM = {
+    "lovi?": ((-5, 2, 2, -1, 0), (-10, 1, 0, 3, 0), (-15, 1, 1, 0, 3)),
+    "gamer?": ((-3, 1, 1, 1, -1), (-6, 0, 1, 0, 1), (-4, -1, 0, 2, 0)),
+    "negra": ((-4, -1, 0, 2, 0), (-6, 0, 1, 0, 1), (-1, -2, -1, 1, 1)),
+}
+
+
+PERGEN_3_5_7_13_BY_HOROGRAM = {
+    "lovi?": ((1, 0, 0, 0, 0), (4, 0, 0, 0, -1)),
+    "gamer?": ((1, 0, 0, 0, 0), (4, -1, -1, 0, 0)),
+    "negra": ((1, 0, 0, 0, 0), (4, -1, -1, 0, 0)),
+}
+
+
 def temper(comma_list, just_mapping=JI_5LIMIT, num_iterations=1000):
     """
     Temper out a given list of commas.
@@ -340,7 +356,7 @@ def guess_pergen(comma_list, mapping, search_depth=10, generation_depth=None, to
     modulus = mapping[0] / edo
     generator = None
     for candidate in product(search_space, repeat=len(mapping)-1):
-        candidate = array([0] + candidate)
+        candidate = array((0,) + candidate)
         generates = array([False] * (len(mapping)-1))
         for multiplier in range(-generation_depth, generation_depth+1):  # pylint: disable=invalid-unary-operand-type
             for i, coord in enumerate(mapping[1:]):
@@ -630,8 +646,6 @@ def find_subset_commas_manhattan(max_complexity, factors, threshold=Fraction(10,
             for exponent in search_space:
                 search(num_remaining - 1, exponents + [exponent])
         else:
-            if reduce(gcd, exponents) not in (-1, 1):
-                return
             comma = Fraction(1)
             for factor, exponent in zip(factors, exponents):
                 comma *= factor**exponent
@@ -642,6 +656,8 @@ def find_subset_commas_manhattan(max_complexity, factors, threshold=Fraction(10,
             while comma < 1:
                 comma *= period
                 num_periods += 1
+            if reduce(gcd, exponents + [num_periods]) not in (-1, 1):
+                return
             if comma < threshold:
                 result.append((comma, array([num_periods] + exponents)))
     search(len(factors), [])

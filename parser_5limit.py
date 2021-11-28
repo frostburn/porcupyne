@@ -379,12 +379,12 @@ def parse(text, beat_duration=Fraction(1), initial_pitch=(0, 0, 0), extra_interv
             if "_" in chord_token:
                 chord_token, inversion_token = chord_token.split("_", 1)
         elif "[" in token:
-            interval_token, token = token.split("[")
+            interval_token, token = token.split("[", 1)
         else:
             interval_token = token
             token = ""
         if "]" in token:
-            duration_token, token = token.lstrip("[").split("]")
+            duration_token, token = token.lstrip("[").split("]", 1)
 
         if token:
             raise ValueError("Failed to fully parse token")
