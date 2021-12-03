@@ -612,6 +612,7 @@ def mod_comma(pitch, comma):
 # TODO: def comma_equals(pitch_a, pitch_b, comma_list, persistence=10):
 
 
+# TODO: Just find successive natural numbers and try their ratios
 def find_subset_commas(max_complexity, factors, threshold=Fraction(10, 9)):
     """
     Find intervals smaller than a given threshold between factors less complex than the given limit
