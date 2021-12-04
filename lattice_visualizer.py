@@ -388,10 +388,13 @@ DIGIT_OFFSETS = {
 }
 
 
-def number_symbol(x, y, number, thickness):
+def number_symbol(x, y, number, thickness, centered=False):
     digits = str(number)
-    result = DIGITS[digits[0]](x - DIGIT_OFFSETS.get(digits[0], 0), y, thickness)
-    offset = 1
+    offset = 0
+    if centered:
+        offset -= 0.75*len(digits)
+    result = DIGITS[digits[0]](x - DIGIT_OFFSETS.get(digits[0], 0) - offset, y, thickness)
+    offset += 1.5
     for digit in digits[1:]:
         result = logical_or(result, DIGITS[digit](x - DIGIT_OFFSETS.get(digit, 0) - offset, y, thickness))
         offset += 1.5
@@ -611,7 +614,10 @@ def hex_grid(x, y, spacing=0.2, line_thickness=0.1, notation=None):
                     letter, sharps, arrows = notate(threes, fives, horogram="JI")
                 else:
                     letter, sharps, arrows = notation(threes, fives)
-                result = logical_xor(result, note_symbol(2.75*(x - loc_x + 0.25), 2.75*(y - loc_y), letter, sharps, arrows, None, line_thickness))
+                if letter.isdigit():
+                    result = logical_xor(result, number_symbol(2.75*(x - loc_x - 0.25), 2.75*(y - loc_y), letter, line_thickness, centered=True))
+                else:
+                    result = logical_xor(result, note_symbol(2.75*(x - loc_x + 0.25), 2.75*(y - loc_y), letter, sharps, arrows, None, line_thickness))
 
     return result
 
@@ -646,7 +652,6 @@ def screen_coords(resolution, x0, y0, scale):
     return meshgrid(x, y)
 
 
-# TODO: Anti-aliasing
 def visualize_sonorities(resolution, x0, y0, scale, sonorities, notation=None, comma_list=None, indices=(1, 2), comma_range=7):
     x, y = screen_coords(resolution, x0, y0, scale)
 
