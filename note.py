@@ -237,71 +237,19 @@ def note_unicode_5limit(threes, fives, twos=None, horogram="JI"):
     return note_unicode(letter, sharps, arrows, octaves)
 
 
-class PitchContext:
-    """
-    Defines how pitch vectors are interpreted as frequencies
-    """
-
-    def __init__(self, mapping, comma=None, base_frequency=440):
-        self.mapping = mapping
-        self.comma = comma
-        self.base_frequency = base_frequency
-
-    def pitch_to_freq(self, vector):
-        return exp(dot(self.mapping, vector)) * self.base_frequency
-
-    def interval_to_ratio(self, vector):
-        return exp(dot(self.mapping, vector))
-
-    def equals(self, vector_a, vector_b):
-        if self.comma is None:
-            return (array(vector_a) == array(vector_b)).all()
-        return (mod_comma(vector_a, self.comma) == mod_comma(vector_b, self.comma)).all()
-
-    def treble(self):
-        """
-        Return a copy of the pitch context tuned up by a pure octave
-        """
-        return self.__class__(self.mapping, self.comma, self.base_frequency*2)
-
-    def bass(self):
-        """
-        Return a copy of the pitch context tuned down by a pure octave
-        """
-        return self.__class__(self.mapping, self.comma, self.base_frequency/2)
-
-
-DEFAULT_PITCH_CONTEXT = PitchContext(JI_5LIMIT)
-
-
-ISLAND_PITCH_CONTEXT = PitchContext(JI_ISLAND)
-
-
-PITCH_CONTEXT_7LIMIT = PitchContext(JI_7LIMIT)
-
-
-PITCH_CONTEXT_11LIMIT = PitchContext(JI_11LIMIT)
-
-
-PITCH_CONTEXT_3_7 = PitchContext(JI_3_7)
-
-
-PITCH_CONTEXT_7_11 = PitchContext(JI_7_11)
-
-
 @total_ordering
 class Note:
     """
-    Notes carry pitch vector, duration, note on time, note on velocity, note off velocity data.
-    A Note instance is associated with a context for interpreting pitch vectors as frequencies
+    Notes carry pitch vector, duration, note on time, note on velocity and note off velocity data.
+    A Note instance is associated with a tuning for interpreting pitch vectors as frequencies
     """
-    def __init__(self, pitch=None, duration=None, time=None, velocity=0.7, off_velocity=0.5, context=None):
+    def __init__(self, pitch=None, duration=None, time=None, velocity=0.7, off_velocity=0.5, tuning=None):
         self.pitch = pitch
         self.duration = duration
         self.time = time
         self.velocity = velocity
         self.off_velocity = off_velocity
-        self._context = context
+        self.tuning = tuning
 
     @property
     def off_time(self):
@@ -310,23 +258,50 @@ class Note:
         return self.time + self.duration
 
     @property
-    def context(self):
-        return self._context or DEFAULT_PITCH_CONTEXT
-
-    @property
     def freq(self):
         if self.pitch is None:
             return None
-        return self.context.pitch_to_freq(self.pitch)
+        return self.tuning.pitch_to_freq_rads(self.pitch)[0]
+
+    @property
+    def rads(self):
+        if self.pitch is None:
+            return None
+        return self.context.pitch_to_freq_rads(self.pitch)[1]
 
     def __lt__(self, other):
         return self.freq < other.freq
 
     def __eq__(self, other):
-        return self.context.equals(self.pitch, other.pitch)
+        return self.tuning.equals(self.pitch, other.pitch)
 
     def __repr__(self):
         return "{}({}, {}, {})".format(self.__class__.__name__, tuple(self.pitch), self.duration, self.time)
 
     def copy(self):
-        return self.__class__(self.pitch[:], self.duration, self.time, self.velocity, self.off_velocity, self.context)
+        return self.__class__(self.pitch[:], self.duration, self.time, self.velocity, self.off_velocity, self.tuning)
+
+    @classmethod
+    def from_gated_note(cls, gated_note, dynamic, tuning):
+        return cls(gated_note.pitch, gated_note.realduration, gated_note.realtime, dynamic.velocity, tuning)
+
+
+def sonorities(notes, tolerance=1e-6):
+    """
+    Break notes into groups that sound together.
+    """
+    notes = list(sorted(notes, key=lambda n: n.time))
+    result = []
+    sonority = []
+    while notes:
+        time = notes[0].time
+        for note in sonority[:]:
+            if note.off_time < time + tolerance:
+                sonority.remove(note)
+        while notes and abs(notes[0].time - time) < tolerance:
+            sonority.append(notes.pop(0))
+        result.append((time, sonority[:]))
+    if sonority:
+        off_time = max(note.off_time for note in sonority)
+        result.append(off_time, [])
+    return result

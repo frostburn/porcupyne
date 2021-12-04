@@ -616,11 +616,11 @@ def hex_grid(x, y, spacing=0.2, line_thickness=0.1, notation=None):
     return result
 
 
-def hex_highlight(x, y, threes, fives, spacing=0.2):
+def hex_highlight(x, y, threes, fives, spacing=0.2, padding=0.5):
     loc_x = 0.5*(2*SQ3 + spacing)*fives
     loc_y = (2 + 0.5*spacing*SQ3)*threes + (1 + spacing*0.25*SQ3)*fives
 
-    return hexagon((x - loc_x)*(1-0.2*spacing), (y - loc_y)*(1-0.2*spacing))
+    return hexagon((x - loc_x)*(1-padding*spacing), (y - loc_y)*(1-padding*spacing))
 
 
 RESOLUTIONS = {
@@ -637,28 +637,49 @@ RESOLUTIONS = {
 }
 
 
-# TODO: Anti-aliasing
-def visualize_progression(resolution, x0, y0, scale, notess, notation=None, comma=None):
+def screen_coords(resolution, x0, y0, scale):
     width, height = RESOLUTIONS[resolution]
     aspect = width / height
     x = linspace(-scale*aspect, scale*aspect, width) + x0
     y = linspace(scale, -scale, height) + y0
 
-    x, y = meshgrid(x, y)
+    return meshgrid(x, y)
+
+
+# TODO: Anti-aliasing
+def visualize_sonorities(resolution, x0, y0, scale, sonorities, notation=None, comma_list=None, indices=(1, 2), comma_range=7):
+    x, y = screen_coords(resolution, x0, y0, scale)
 
     grid = hex_grid(x, y, notation=notation)*1.0
-    for notes in notess:
-        highlights = 0*x
-        root_highlights = 0*x
-        if comma is None:
+    i, j = indices
+    highlightss = []
+    for time, notes in sonorities:
+        highlights = 0.0*x
+        if not comma_list:
             for note in notes:
-                highlights += hex_highlight(x, y, note.pitch[1], note.pitch[2])
-            root_highlights = hex_highlight(x, y, notes[0].pitch[1], notes[0].pitch[2])
-        else:
-            for k in range(-6, 7):
+                highlights += hex_highlight(x, y, note.pitch[i], note.pitch[j])
+        elif len(comma_list) == 1:
+            comma = comma_list[0]
+            for k in range(-comma_range, comma_range):
                 for note in notes:
-                    highlights += hex_highlight(x, y, note.pitch[1] + k*comma[1], note.pitch[2] + k*comma[2])
-                root_highlights += hex_highlight(x, y, notes[0].pitch[1] + k*comma[1], notes[0].pitch[2] + k*comma[2])
+                    highlights += hex_highlight(x, y, note.pitch[i] + k*comma[i], note.pitch[j] + k*comma[j])
+        else:
+            raise NotImplementedError("TODO")
+        highlightss.append((time, highlights))
 
-        image = [grid - highlights, grid - highlights*0.1, grid - root_highlights]
-        yield image
+    return grid, highlightss
+
+
+def animate_notes(x, y, delta_t, decay, notes, indices=(1, 2), tolerance=1e-6):
+    decay = decay**delta_t
+    i, j = indices
+    highlights = 0.0*x
+    t = 0.0
+    notes = list(sorted(notes, key=lambda n:n.time))
+    while True:
+        while notes and notes[0].time <= t + tolerance:
+            note = notes.pop(0)
+            highlights += hex_highlight(x, y, note.pitch[i], note.pitch[j])
+        highlights = highlights * decay
+        yield highlights
+        t += delta_t
