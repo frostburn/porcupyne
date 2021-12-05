@@ -680,7 +680,7 @@ def animate_notes(x, y, delta_t, decay, notes, indices=(1, 2), tolerance=1e-6):
     i, j = indices
     highlights = 0.0*x
     t = 0.0
-    notes = list(sorted(notes, key=lambda n:n.time))
+    notes = list(sorted(notes, key=lambda n: n.time))
     while True:
         while notes and notes[0].time <= t + tolerance:
             note = notes.pop(0)

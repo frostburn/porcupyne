@@ -267,7 +267,7 @@ class Note:
     def rads(self):
         if self.pitch is None:
             return None
-        return self.context.pitch_to_freq_rads(self.pitch)[1]
+        return self.tuning.pitch_to_freq_rads(self.pitch)[1]
 
     def __lt__(self, other):
         return self.freq < other.freq
