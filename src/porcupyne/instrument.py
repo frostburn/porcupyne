@@ -1,6 +1,6 @@
 from numpy import tanh, arange, interp, log, exp, array, sin, arcsin, pi
 from numpy.random import rand
-from audio import trange, softsaw, merge_stereo, integrate, EPSILON
+from .audio import trange, softsaw, merge_stereo, integrate, EPSILON
 #pylint: disable=invalid-name, too-few-public-methods
 
 

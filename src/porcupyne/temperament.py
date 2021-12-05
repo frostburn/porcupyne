@@ -8,7 +8,7 @@ from functools import reduce
 from itertools import combinations, product
 from numpy import log, dot, array, cross, absolute, sign, prod, arange, exp
 from numpy.linalg import norm
-from util import gcd
+from .util import gcd
 
 # Prime limit mappings
 JI_5LIMIT = log(array([2, 3, 5]))

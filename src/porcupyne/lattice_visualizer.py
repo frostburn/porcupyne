@@ -1,7 +1,7 @@
 # pylint: disable=invalid-name, missing-function-docstring
 from numpy import logical_and, logical_or, logical_xor, sqrt, stack, clip, maximum, sign, floor, linspace, meshgrid, minimum, copysign
 from numpy.random import random
-from note import notate
+from .note import notate
 
 
 def make_picture_frame(rgb, dither=1.0/256.0):
