@@ -1,15 +1,33 @@
 # pylint: disable=invalid-name, missing-function-docstring
-from numpy import logical_and, logical_or, logical_xor, sqrt, stack, clip, maximum, sign, floor, linspace, meshgrid, minimum, copysign
+from numpy import logical_and, logical_or, logical_xor, sqrt, stack, clip, maximum, sign, floor, linspace, meshgrid, minimum, copysign, uint8
 from numpy.random import random
 from .note import notate
 
 
 def make_picture_frame(rgb, dither=1.0/256.0):
+    """
+    Convert float data in 0.0 to 1.0 range to a format accepted by matplotlib.image.imsave
+    """
     if dither:
         rgb = [channel + random(channel.shape)*dither for channel in rgb]
     frame = stack(rgb, axis=-1)
     frame = clip(frame, 0.0, 1.0)
     return frame
+
+
+def make_video_frame(rgb, indexing='ij', dither=1.0/256.0):
+    """
+    Convert float data in 0.0 to 1.0 range to a format accepted by imageio.get_writer().append_data
+    """
+    # Videos usually don't use rgb pixel format so technically dithering should be done for chroma and luma separately,
+    # but that would require writing a new plugin for imageio. Dithering here does help a little though.
+    if dither:
+        rgb = [channel + random(channel.shape)*dither for channel in rgb]
+    # if indexing == 'ij':
+    #     rgb = [channel.T for channel in rgb]
+    frame = stack(rgb, axis=-1)
+    frame = clip(frame, 0.0, 1.0)
+    return (frame * 255).astype(uint8)
 
 
 SQ3 = sqrt(3)
@@ -675,7 +693,7 @@ def visualize_sonorities(resolution, x0, y0, scale, sonorities, notation=None, c
     return grid, highlightss
 
 
-def animate_notes(x, y, delta_t, decay, notes, indices=(1, 2), tolerance=1e-6):
+def animate_notes(x, y, delta_t, decay, notes, indices=(1, 2), tolerance=1e-6, highlighter=hex_highlight):
     decay = decay**delta_t
     i, j = indices
     highlights = 0.0*x
@@ -684,7 +702,7 @@ def animate_notes(x, y, delta_t, decay, notes, indices=(1, 2), tolerance=1e-6):
     while True:
         while notes and notes[0].time <= t + tolerance:
             note = notes.pop(0)
-            highlights += hex_highlight(x, y, note.pitch[i], note.pitch[j])
+            highlights += highlighter(x, y, note.pitch[i], note.pitch[j])
         highlights = highlights * decay
         yield highlights
         t += delta_t
