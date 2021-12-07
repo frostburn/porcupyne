@@ -378,7 +378,7 @@ LETTERS = {
 LETTER_OFFSETS = {
     "D": -0.25,
     "E": -0.15,
-    "F": -0.1,
+    "F": -0.12,
     "G": 0.1,
     "A": -0.1,
 }
@@ -566,10 +566,13 @@ def square_grid(x, y, padding=0.05, line_thickness=0.1, notation=None):
                 letter, sharps, arrows = notate(threes, fives, horogram="JI")
             else:
                 letter, sharps, arrows = notation(threes, fives)
-            result = logical_xor(
-                result,
-                note_symbol(6*(x - fives + 0.1), 6*(y - threes), letter, sharps, arrows, None, line_thickness)
-            )
+            if letter.isdigit():
+                result = logical_xor(result, number_symbol(6*(x - fives - 0.1), 6*(y - threes), letter, line_thickness, centered=True))
+            else:
+                result = logical_xor(
+                    result,
+                    note_symbol(6*(x - fives + 0.1), 6*(y - threes), letter, sharps, arrows, None, line_thickness)
+                )
 
     return result
 
