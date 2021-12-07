@@ -34,7 +34,7 @@ def notate(threes, fives, twos=None, horogram="JI"):
         if horogram == "blackwood":
             threes = threes - ((threes + 1)//5)*5
             if threes == 3:
-                return (threes + 4*fives + 4, -1)
+                return notate(threes + 4*fives + 4, -1, horogram="JI")
             return notate(threes + 4*fives, 0, horogram="JI")
         if horogram == "magic":
             fifths_19edo = [0, 7, 14, 2, 9, 16, 4, 11, 18, 6, 13, 1, 8, 15, 3, 10, 17, 5, 12]
