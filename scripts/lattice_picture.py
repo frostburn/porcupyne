@@ -2,7 +2,8 @@
 from collections import Counter
 import argparse
 from pylab import *
-from porcupyne.lattice_visualizer import hex_grid, square_grid, hex_highlight, square_highlight, make_picture_frame, square_pergen_grid
+from porcupyne.graphics import make_picture_frame
+from porcupyne.lattice_visualizer import hex_grid, square_grid, hex_highlight, square_highlight, square_pergen_grid
 from porcupyne.temperament import COMMA_BY_HOROGRAM, PERGEN_BY_HOROGRAM, ISLAND_COMMA_BY_HOROGRAM, ISLAND_PERGEN_BY_HOROGRAM, COMMA_3_7_BY_HOROGRAM, PERGEN_3_7_BY_HOROGRAM
 from porcupyne.temperament import COMMA_7_11_BY_HOROGRAM, PERGEN_7_11_BY_HOROGRAM
 from porcupyne.note import notate, notate_island, notate_3_7, notate_7_11

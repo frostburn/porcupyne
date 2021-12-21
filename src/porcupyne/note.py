@@ -283,7 +283,11 @@ class Note:
 
     @classmethod
     def from_gated_note(cls, gated_note, dynamic, tuning):
-        return cls(gated_note.pitch, gated_note.realduration, gated_note.realtime, dynamic.velocity, tuning)
+        return cls(gated_note.pitch, gated_note.realduration, gated_note.realtime, dynamic.velocity, tuning=tuning)
+
+    @classmethod
+    def from_note(cls, note, dynamic, tuning):
+        return cls(note.pitch, note.duration, note.time, dynamic.velocity, tuning=tuning)
 
 
 def sonorities(notes, tolerance=1e-6):
@@ -303,5 +307,5 @@ def sonorities(notes, tolerance=1e-6):
         result.append((time, sonority[:]))
     if sonority:
         off_time = max(note.off_time for note in sonority)
-        result.append(off_time, [])
+        result.append((off_time, []))
     return result
