@@ -276,7 +276,11 @@ class Note:
         return self.tuning.equals(self.pitch, other.pitch)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(self.__class__.__name__, tuple(self.pitch), self.duration, self.time)
+        try:
+            p = tuple(self.pitch)
+        except TypeError:
+            p = self.pitch
+        return "{}({}, {}, {}, {}, {})".format(self.__class__.__name__, p, self.duration, self.time, self.velocity, self.off_velocity)
 
     def copy(self):
         return self.__class__(self.pitch[:], self.duration, self.time, self.velocity, self.off_velocity, self.tuning)
@@ -309,3 +313,27 @@ def sonorities(notes, tolerance=1e-6):
         off_time = max(note.off_time for note in sonority)
         result.append((off_time, []))
     return result
+
+
+def from_midi(filename):
+    import mido
+    midi = mido.MidiFile(filename)
+
+    results = []
+    for track in midi.tracks:
+        result = []
+        note_ons = {}
+        current_time = 0
+        for message in track:
+            current_time += message.time
+            if message.type == "note_on":
+                note_ons[(message.channel, message.note)] = (current_time, message.velocity)
+            if message.type == "note_off":
+                on_time, on_velocity = note_ons.pop((message.channel, message.note))
+                result.append(Note(message.note, current_time - on_time, on_time, on_velocity, message.velocity))
+        for key, value in note_ons.items():
+            channel, note = key
+            on_time, on_velocity = value
+            result.append(Note(note, current_time - on_time, on_time, on_velocity))
+        results.append(result)
+    return results
