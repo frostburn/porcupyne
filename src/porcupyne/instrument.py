@@ -1,6 +1,6 @@
-from numpy import tanh, arange, interp, log, exp, array, sin, arcsin, pi
+from numpy import tanh, arange, interp, log, exp, array, sin, arcsin, pi, ceil, sqrt, maximum
 from numpy.random import rand
-from .audio import trange, softsaw, merge_stereo, integrate, EPSILON
+from .audio import trange, softsaw, merge_stereo, integrate, EPSILON, sine
 #pylint: disable=invalid-name, too-few-public-methods
 
 
@@ -87,11 +87,45 @@ class Ping(Instrument):
         return array((left, right))
 
 
-def render_notes(notess, instrument):
+class Shepard(Instrument):
+    """
+    Shepard tones with gaussian octave envelope.
+    """
+
+    def __init__(self, waveform=sine, falloff=0.5, base_freq=440, attack=0.1, decay=0.1):
+        super().__init__()
+        self.waveform = sine
+        self.falloff = falloff
+        self.base_freq = base_freq
+        self.attack = attack
+        self.decay = decay
+
+        norm = 0
+        for i in self.component_range():
+            norm += exp(-(i*self.falloff)**2)
+        self.i_norm = 1 / norm
+
+    def component_range(self):
+        limit = int(ceil(sqrt(-log(EPSILON))/self.falloff))
+        return range(-limit, limit+1)
+
+    def play(self, note):
+        duration = float(note.duration)
+        dur = duration - log(EPSILON) * self.decay
+        t = trange(dur)
+        envelope = tanh(t/self.attack) * exp(-maximum(0, t - duration)/self.decay)
+
+        freq = exp(log(float(note.freq) / self.base_freq)%log(2)) * self.base_freq
+        wave = 0
+        for i in self.component_range():
+            phase = t * freq * 2**i
+            wave += exp(-(i*self.falloff)**2) * self.waveform(phase)
+        signal = envelope * wave * self.i_norm * float(note.velocity)
+        return array((signal, signal))
+
+
+def render_notes(notes, instrument):
     samples = []
-    for notes in notess:
-        if not isinstance(notes, list):
-            notes = [notes]
-        for note in notes:
-            samples.append((instrument.play(note), note.time))
+    for note in notes:
+        samples.append((instrument.play(note), float(note.time)))
     return merge_stereo(*samples)

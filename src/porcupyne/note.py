@@ -6,6 +6,7 @@ from functools import total_ordering
 from numpy import array, dot, exp
 from .temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND, JI_7LIMIT, JI_11LIMIT, JI_3_7, canonize_3_7, canonize2_3_7, canonize_7_11, JI_7_11
 from .util import note_unicode
+from hewmp.parser import parse_text, RealTuning, RealDynamic, GatedNote
 
 
 LYDIAN = ("F", "C", "G", "D", "A", "E", "B")
@@ -337,3 +338,18 @@ def from_midi(filename):
             result.append(Note(note, current_time - on_time, on_time, on_velocity))
         results.append(result)
     return results
+
+
+def from_hewmp(text):
+    tracks, _ = parse_text(text)
+
+    notes = []
+    for track in tracks:
+        for event in track.realize().events:
+            if isinstance(event, RealTuning):
+                tuning = event
+            if isinstance(event, RealDynamic):
+                dynamic = event
+            if isinstance(event, GatedNote):
+                notes.append(Note.from_gated_note(event, dynamic, tuning))
+    return notes

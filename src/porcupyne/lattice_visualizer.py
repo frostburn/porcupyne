@@ -111,7 +111,7 @@ def hex_grid(x, y, spacing=0.2, line_thickness=0.1, notation=None):
     return result
 
 
-def hex_highlight(x, y, threes, fives, spacing=0.2, padding=0.5):
+def hex_highlight(x, y, threes, fives, spacing=0.2, padding=0.4):
     loc_x = 0.5*(2*SQ3 + spacing)*fives
     loc_y = (2 + 0.5*spacing*SQ3)*threes + (1 + spacing*0.25*SQ3)*fives
 

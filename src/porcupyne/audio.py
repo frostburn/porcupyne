@@ -18,6 +18,10 @@ def integrate(signal):
     return cumsum(signal) / SAMPLE_RATE
 
 
+def sine(phase):
+    return sin(2*pi*phase)
+
+
 def softsaw(phase, sharpness):
     sharpness = clip(sharpness, EPSILON, 1.0 - EPSILON)
     return arctan(
