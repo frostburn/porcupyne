@@ -17,7 +17,7 @@ def gm_labels(index):
     return sharps, letter, sharps, 0, octaves
 
 
-def _roll_coords(resolution, start, end, low, high):
+def roll_coords(resolution, start, end, low, high):
     if resolution in RESOLUTIONS:
         width, height = RESOLUTIONS[resolution]
     else:
@@ -38,7 +38,7 @@ def piano_roll(resolution, start, end, low, high, labels=None):
     if labels is None:
         labels = gm_labels
 
-    x, y, screen_x, _ = _roll_coords(resolution, start, end, low, high)
+    x, y, screen_x, _ = roll_coords(resolution, start, end, low, high)
 
     grid = x*0 + 1
 
@@ -55,7 +55,7 @@ def piano_roll(resolution, start, end, low, high, labels=None):
 
 
 def piano_holes(resolution, start, end, low, high, notes, border=0.1):
-    x, y, _, screen_ratio = _roll_coords(resolution, start, end, low, high)
+    x, y, _, screen_ratio = roll_coords(resolution, start, end, low, high)
     holes = 0*x
     for note in notes:
         holes += logical_and(

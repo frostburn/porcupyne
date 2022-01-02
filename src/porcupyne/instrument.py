@@ -92,7 +92,7 @@ class Shepard(Instrument):
     Shepard tones with gaussian octave envelope.
     """
 
-    def __init__(self, waveform=sine, falloff=0.5, base_freq=440, attack=0.1, decay=0.1):
+    def __init__(self, waveform=sine, falloff=0.5, base_freq=440, attack=0.05, decay=0.05):
         super().__init__()
         self.waveform = sine
         self.falloff = falloff

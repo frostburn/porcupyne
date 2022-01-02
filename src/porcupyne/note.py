@@ -3,9 +3,9 @@
 Notation and containers for multi-dimensional MIDI style data
 """
 from functools import total_ordering
-from numpy import array, dot, exp
+from numpy import array, dot, exp, log
 from .temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND, JI_7LIMIT, JI_11LIMIT, JI_3_7, canonize_3_7, canonize2_3_7, canonize_7_11, JI_7_11
-from .util import note_unicode
+from .util import note_unicode, rwh_primes1, append_prime
 from hewmp.parser import parse_text, RealTuning, RealDynamic, GatedNote
 
 
@@ -238,6 +238,33 @@ def note_unicode_5limit(threes, fives, twos=None, horogram="JI"):
     return note_unicode(letter, sharps, arrows, octaves)
 
 
+PRIMES = rwh_primes1(100)
+
+
+class JustIntonation:
+    def __init__(self, num_primes, base_freq=440):
+        while len(PRIMES) < num_primes:
+            append_prime(PRIMES)
+        self.mapping = log(PRIMES[:num_primes])
+        self.base_freq = base_freq
+
+    def pitch_to_freq_rads(self, pitch):
+        return exp(dot(pitch, self.mapping)) * self.base_freq, 0
+
+
+JI = {}
+
+
+class EqualTemperament:
+    def __init__(self, divisions=12, divided=2, base_freq=440):
+        self.divisions = divisions
+        self.divided = divided
+        self.base_freq = base_freq
+
+    def pitch_to_freq_rads(self, pitch):
+        return self.base_freq * self.divided ** (pitch / self.divisions)
+
+
 @total_ordering
 class Note:
     """
@@ -250,6 +277,10 @@ class Note:
         self.time = time
         self.velocity = velocity
         self.off_velocity = off_velocity
+        if tuning is None:
+            if len(pitch) not in JI:
+                JI[len(pitch)] = JustIntonation(len(pitch))
+            tuning = JI[len(pitch)]
         self.tuning = tuning
 
     @property
