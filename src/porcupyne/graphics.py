@@ -18,7 +18,10 @@ RESOLUTIONS = {
 
 
 def screen_coords(resolution, x0, y0, scale):
-    width, height = RESOLUTIONS[resolution]
+    if resolution in RESOLUTIONS:
+        width, height = RESOLUTIONS[resolution]
+    else:
+        width, height = resolution
     aspect = width / height
     x = linspace(-scale*aspect, scale*aspect, width) + x0
     y = linspace(scale, -scale, height) + y0

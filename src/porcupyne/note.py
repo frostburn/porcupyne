@@ -277,7 +277,7 @@ class Note:
         self.time = time
         self.velocity = velocity
         self.off_velocity = off_velocity
-        if tuning is None:
+        if tuning is None and not (isinstance(pitch, int) or isinstance(pitch, float)):
             if len(pitch) not in JI:
                 JI[len(pitch)] = JustIntonation(len(pitch))
             tuning = JI[len(pitch)]
