@@ -109,3 +109,7 @@ def append_prime(primes):
                 return
             if n % p == 0:
                 break
+
+def rindex(lst, value):
+    lst = list(lst)
+    return len(lst) - lst[::-1].index(value) - 1
