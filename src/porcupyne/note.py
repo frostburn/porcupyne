@@ -6,7 +6,7 @@ from functools import total_ordering
 from numpy import array, dot, exp, log
 from .temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND, JI_7LIMIT, JI_11LIMIT, JI_3_7, canonize_3_7, canonize2_3_7, canonize_7_11, JI_7_11
 from .util import note_unicode, rwh_primes1, append_prime
-from hewmp.parser import parse_text, RealTuning, RealDynamic, GatedNote
+from hewmp.parser import parse_text, Tuning, Dynamic, Note
 
 
 LYDIAN = ("F", "C", "G", "D", "A", "E", "B")
@@ -289,6 +289,10 @@ class Note:
             return None
         return self.time + self.duration
 
+    @off_time.setter
+    def off_time(self, value):
+        self.duration = value - self.time
+
     @property
     def freq(self):
         if self.pitch is None:
@@ -319,7 +323,7 @@ class Note:
 
     @classmethod
     def from_gated_note(cls, gated_note, dynamic, tuning):
-        return cls(gated_note.pitch, gated_note.realduration, gated_note.realtime, dynamic.velocity, tuning=tuning)
+        return cls(gated_note.pitch, gated_note.real_duration, gated_note.real_time, dynamic.velocity, tuning=tuning)
 
     @classmethod
     def from_note(cls, note, dynamic, tuning):
@@ -377,10 +381,10 @@ def from_hewmp(text):
     notes = []
     for track in tracks:
         for event in track.realize().events:
-            if isinstance(event, RealTuning):
+            if isinstance(event, Tuning):
                 tuning = event
-            if isinstance(event, RealDynamic):
+            if isinstance(event, Dynamic):
                 dynamic = event
-            if isinstance(event, GatedNote):
+            if isinstance(event, Note):
                 notes.append(Note.from_gated_note(event, dynamic, tuning))
     return notes
