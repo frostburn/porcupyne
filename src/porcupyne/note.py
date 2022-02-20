@@ -6,7 +6,8 @@ from functools import total_ordering
 from numpy import array, dot, exp, log
 from .temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND, JI_7LIMIT, JI_11LIMIT, JI_3_7, canonize_3_7, canonize2_3_7, canonize_7_11, JI_7_11
 from .util import note_unicode, rwh_primes1, append_prime
-from hewmp.parser import parse_text, Tuning, Dynamic, Note
+from hewmp.parser import parse_text
+from hewmp.event import Note as HEWMPNote
 
 
 LYDIAN = ("F", "C", "G", "D", "A", "E", "B")
@@ -321,13 +322,34 @@ class Note:
     def copy(self):
         return self.__class__(self.pitch[:], self.duration, self.time, self.velocity, self.off_velocity, self.tuning)
 
-    @classmethod
-    def from_gated_note(cls, gated_note, dynamic, tuning):
-        return cls(gated_note.pitch, gated_note.real_duration, gated_note.real_time, dynamic.velocity, tuning=tuning)
 
-    @classmethod
-    def from_note(cls, note, dynamic, tuning):
-        return cls(note.pitch, note.duration, note.time, dynamic.velocity, tuning=tuning)
+class HEWMPWrapper:
+    def __init__(self, base):
+        self.base = base
+
+    @property
+    def freq(self):
+        return self.base.real_frequency
+
+    @property
+    def duration(self):
+        return self.base.real_gate_length
+
+    @property
+    def time(self):
+        return self.base.real_time
+
+    @property
+    def off_time(self):
+        return self.time + self.duration
+
+    @property
+    def velocity(self):
+        return self.base.velocity
+
+    @property
+    def rads(self):
+        return self.base.pitch.phase
 
 
 def sonorities(notes, tolerance=1e-6):
@@ -381,10 +403,6 @@ def from_hewmp(text):
     notes = []
     for track in tracks:
         for event in track.realize().events:
-            if isinstance(event, Tuning):
-                tuning = event
-            if isinstance(event, Dynamic):
-                dynamic = event
-            if isinstance(event, Note):
-                notes.append(Note.from_gated_note(event, dynamic, tuning))
+            if isinstance(event, HEWMPNote):
+                notes.append(HEWMPWrapper(event))
     return notes
