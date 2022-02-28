@@ -10,6 +10,11 @@ SAMPLE_RATE = 48000
 PHI = (sqrt(5)+1)/2
 
 
+def set_sample_rate(value):
+    global SAMPLE_RATE
+    SAMPLE_RATE = value
+
+
 def trange(duration):
     return arange(int(round(duration * SAMPLE_RATE))) / SAMPLE_RATE
 
@@ -20,6 +25,10 @@ def integrate(signal):
 
 def sine(phase):
     return sin(2*pi*phase)
+
+
+def cosine(phase):
+    return cos(2*pi*phase)
 
 
 def softsaw(phase, sharpness):

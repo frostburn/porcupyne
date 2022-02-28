@@ -6,7 +6,7 @@ from functools import total_ordering
 from numpy import array, dot, exp, log
 from .temperament import JI_5LIMIT, mod_comma, canonize, canonize2, JI_ISLAND, JI_7LIMIT, JI_11LIMIT, JI_3_7, canonize_3_7, canonize2_3_7, canonize_7_11, JI_7_11
 from .util import note_unicode, rwh_primes1, append_prime
-from hewmp.parser import parse_text
+from hewmp.parser import parse_text, realize
 from hewmp.event import Note as HEWMPNote
 
 
@@ -329,15 +329,15 @@ class HEWMPWrapper:
 
     @property
     def freq(self):
-        return self.base.real_frequency
+        return float(self.base.real_frequency)
 
     @property
     def duration(self):
-        return self.base.real_gate_length
+        return float(self.base.real_gate_length)
 
     @property
     def time(self):
-        return self.base.real_time
+        return float(self.base.real_time)
 
     @property
     def off_time(self):
@@ -345,11 +345,11 @@ class HEWMPWrapper:
 
     @property
     def velocity(self):
-        return self.base.velocity
+        return float(self.base.velocity)
 
     @property
     def rads(self):
-        return self.base.pitch.phase
+        return float(self.base.pitch.phase)
 
 
 def sonorities(notes, tolerance=1e-6):
@@ -399,10 +399,11 @@ def from_midi(filename):
 
 def from_hewmp(text):
     tracks, _ = parse_text(text)
+    tracks = realize(tracks)
 
     notes = []
     for track in tracks:
-        for event in track.realize().events:
+        for event in track.events:
             if isinstance(event, HEWMPNote):
                 notes.append(HEWMPWrapper(event))
     return notes

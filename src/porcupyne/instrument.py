@@ -1,6 +1,6 @@
 from numpy import tanh, arange, interp, log, exp, array, sin, arcsin, pi, ceil, sqrt, maximum
 from numpy.random import rand
-from .audio import trange, softsaw, merge_stereo, integrate, EPSILON, sine
+from .audio import trange, softsaw, merge_stereo, integrate, EPSILON, sine, cosine
 #pylint: disable=invalid-name, too-few-public-methods
 
 
@@ -17,12 +17,31 @@ def vary_frequency(freq, duration, cents, var_freq, lattice_variation=0.15):
     return integrate(freq*exp(pitch_bend))
 
 
+def ar_tanh(t, duration, attack, decay):
+    return tanh(t/attack)*tanh((duration - t)/decay)
+
+
 class Instrument:
     def __init__(self):
         pass
 
     def play(self, note):
         pass
+
+
+class AROsc(Instrument):
+    def __init__(self, waveform=cosine, attack=0.1, decay=0.2):
+        self.waveform = waveform
+        self.attack = attack
+        self.decay = decay
+
+    def play(self, note):
+        dur = float(note.duration)
+        t = trange(dur)
+        env = ar_tanh(t, dur, self.attack, self.decay) * note.velocity
+        signal = self.waveform(t*note.freq + note.rads/(2*pi))
+        result = env*signal
+        return array([result, result])  # Convert to stereo
 
 
 class Strings(Instrument):
@@ -38,13 +57,13 @@ class Strings(Instrument):
     def play(self, note):
         dur = float(note.duration)
         t = trange(dur)
-        env = tanh(t/self.attack)*tanh((dur-t)/self.decay) / self.voice_stacking
+        env = ar_tanh(t, dur, self.attack, self.decay) / self.voice_stacking * note.velocity
         channels = []
         for _ in range(2):
             result = 0
             for _ in range(self.voice_stacking):
                 phase = vary_frequency(note.freq, dur, self.freq_spread, self.var_freq)
-                result = result + softsaw(phase, self.sharpness)
+                result = result + softsaw(phase, self.sharpness*(1 - note.velocity*0.1))
             channels.append(env*result)
         return array(channels)
 

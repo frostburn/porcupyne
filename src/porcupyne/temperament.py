@@ -636,7 +636,6 @@ def find_subset_commas(max_complexity, factors, threshold=Fraction(10, 9)):
 
 
 def find_subset_commas_manhattan(max_complexity, factors, threshold=Fraction(10, 9), period=2):
-    period = Fraction(2)
     factors = [Fraction(f) for f in factors]
     result = []
     search_space = arange(-max_complexity, max_complexity+1)
