@@ -17,17 +17,24 @@ SAMPLE_RATE = 48000
 PHI = (sqrt(5)+1)/2
 
 
+def get_sample_rate():
+    return SAMPLE_RATE
+
+
 def set_sample_rate(value):
     global SAMPLE_RATE
     SAMPLE_RATE = value
 
 
+def dur2N(duration):
+    return int(round(duration * SAMPLE_RATE))
+
 def tempty(duration):
-    return nempty(int(round(duration * SAMPLE_RATE)))
+    return nempty(dur2N(duration))
 
 
 def tzeros(duration):
-    return zeros(int(round(duration * SAMPLE_RATE)))
+    return zeros(dur2N(duration))
 
 
 def tlike(arr):
@@ -35,7 +42,7 @@ def tlike(arr):
 
 
 def trange(duration):
-    return arange(int(round(duration * SAMPLE_RATE))) / SAMPLE_RATE
+    return arange(dur2N(duration)) / SAMPLE_RATE
 
 
 def integrate(signal):
