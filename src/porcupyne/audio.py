@@ -30,6 +30,10 @@ def tzeros(duration):
     return zeros(int(round(duration * SAMPLE_RATE)))
 
 
+def tlike(arr):
+    return arange(len(arr)) / SAMPLE_RATE
+
+
 def trange(duration):
     return arange(int(round(duration * SAMPLE_RATE))) / SAMPLE_RATE
 
@@ -164,6 +168,16 @@ def sineping(frequency, decay, amplitude=1, duration=None, force_fallback=False)
 
 
 def sinepings(frequencies, decays, amplitudes, duration=None, force_fallback=False):
+    fs = []
+    ds = []
+    amps = []
+    nyquist = SAMPLE_RATE / 2
+    for f, d, a in zip(frequencies, decays, amplitudes):
+        if abs(f) < nyquist:
+            fs.append(f)
+            ds.append(d)
+            amps.append(a)
+    frequencies, decays, amplitudes = fs, ds, amps
     if duration is None:
         min_decay = float("inf")
         for decay in decays:
