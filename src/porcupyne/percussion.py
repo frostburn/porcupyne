@@ -26,7 +26,8 @@ class SplashCymbal:
         pings = sinepings(
             self.base_freq * ratios,
             2 + ratios + self.rstate.random(n)*self.decay_spread,
-            1 / (5 + ratios + self.rstate.random(n)*self.amplitude_spread)
+            1 / (5 + ratios + self.rstate.random(n)*self.amplitude_spread),
+            self.rstate.random(n)
         )
         t = tlike(pings)
         result = tanh(sqrt(t+0.000001)*pings*velocity)

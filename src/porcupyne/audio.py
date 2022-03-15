@@ -1,5 +1,5 @@
 import warnings
-from numpy import arange, cumsum, arctan, arcsin, sin, cos, log, exp, array, imag, tanh, pi, sqrt, clip, zeros, ceil, ndarray, empty as nempty
+from numpy import arange, cumsum, arctan, arcsin, sin, cos, log, exp, array, imag, tanh, pi, sqrt, clip, zeros, ceil, ndarray, empty as nempty, zeros_like
 from numpy.random import rand
 import scipy.io.wavfile
 try:
@@ -153,31 +153,35 @@ def empty():
     return array([[], []])
 
 
-def sineping(frequency, decay, amplitude=1, duration=None, force_fallback=False):
+def sineping(frequency, decay, amplitude=1, phase=0, duration=None, force_fallback=False):
     if duration is None:
         if decay <= EPSILON:
             raise ValueError("Non-decaying sine ping and no duration given")
         duration = -log(EPSILON) / decay
     if ffi is None or force_fallback:
         t = trange(duration)
-        return sine(frequency*t) * exp(-t*decay) * amplitude
+        return sine(phase + frequency*t) * exp(-t*decay) * amplitude
     result = tempty(duration)
     result_buf = ffi.cast("double*", result.ctypes.data)
-    lib.sineping(result_buf, len(result), 2*pi*frequency/SAMPLE_RATE, exp(-decay/SAMPLE_RATE), amplitude)
+    lib.sineping(result_buf, len(result), 2*pi*frequency/SAMPLE_RATE, exp(-decay/SAMPLE_RATE), amplitude, 2*pi*phase)
     return result
 
 
-def sinepings(frequencies, decays, amplitudes, duration=None, force_fallback=False):
+def sinepings(frequencies, decays, amplitudes, phases=None, duration=None, force_fallback=False):
+    if phases is None:
+        phases = zeros_like(frequencies)
     fs = []
     ds = []
     amps = []
+    ps = []
     nyquist = SAMPLE_RATE / 2
-    for f, d, a in zip(frequencies, decays, amplitudes):
+    for f, d, a, p in zip(frequencies, decays, amplitudes, phases):
         if abs(f) < nyquist:
             fs.append(f)
             ds.append(d)
             amps.append(a)
-    frequencies, decays, amplitudes = fs, ds, amps
+            ps.append(p)
+    frequencies, decays, amplitudes, phases = fs, ds, amps, ps
     if duration is None:
         min_decay = float("inf")
         for decay in decays:
@@ -189,8 +193,8 @@ def sinepings(frequencies, decays, amplitudes, duration=None, force_fallback=Fal
     if ffi is None or force_fallback:
         t = trange(duration)
         result = tzeros(duration)
-        for frequency, decay, amplitude in zip(frequencies, decays, amplitudes):
-            result += sine(frequency*t) * exp(-t*decay) * amplitude
+        for frequency, decay, amplitude, phase in zip(frequencies, decays, amplitudes, phases):
+            result += sine(phase + frequency*t) * exp(-t*decay) * amplitude
         return result
     result = tzeros(duration)
     result_buf = ffi.cast("double*", result.ctypes.data)
@@ -200,5 +204,11 @@ def sinepings(frequencies, decays, amplitudes, duration=None, force_fallback=Fal
     gammas_buf = ffi.cast("double*", gammas.ctypes.data)
     amplitudes = array(amplitudes)
     amplitudes_buf = ffi.cast("double*", amplitudes.ctypes.data)
-    lib.sinepings(result_buf, len(result), deltas_buf, gammas_buf, amplitudes_buf, min(len(deltas), len(gammas), len(amplitudes)))
+    phases = 2*pi*array(phases)
+    phases_buf = ffi.cast("double*", phases.ctypes.data)
+    lib.sinepings(
+        result_buf, len(result),
+        deltas_buf, gammas_buf, amplitudes_buf, phases_buf,
+        len(deltas)
+    )
     return result
