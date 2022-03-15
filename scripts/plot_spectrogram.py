@@ -8,6 +8,8 @@ parser.add_argument('--xres', type=int, default=200)
 parser.add_argument('--yres', type=int, default=200)
 parser.add_argument('--low', type=float, default=15.0)
 parser.add_argument('--high', type=float, default=1000.0)
+parser.add_argument('--tlow', type=float, default=-0.05)
+parser.add_argument('--thigh', type=float)
 args = parser.parse_args()
 
 sample_rate, data = scipy.io.wavfile.read(args.infile)
@@ -20,16 +22,19 @@ columns = []
 
 fspace = linspace(args.low, args.high, args.yres)
 
-tmin = -0.025
-tmax = t.max() + 0.25
+tmin = args.tlow
+if args.thigh is None:
+    tmax = t.max() + 0.05
+else:
+    tmax = args.thigh
 for t0 in linspace(tmin, tmax, args.xres):
     column = []
     x = (t-t0)*2*pi
     for f in fspace:
-        env = exp(-x*x*sqrt(f))
-        real = (cos(x*f) * env * data).sum()
-        imag = (sin(x*f) * env * data).sum()
-        mag = sqrt(real*real + imag*imag) * f / args.low / args.xres
+        windowed = exp(-x*x*sqrt(f)) * data
+        real = (cos(x*f) * windowed).sum()
+        imag = (sin(x*f) * windowed).sum()
+        mag = sqrt(real*real + imag*imag) / args.low / args.xres
         column.append(mag)
     columns.append(column)
 
