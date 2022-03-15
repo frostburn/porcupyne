@@ -1,6 +1,13 @@
-from numpy import arange, cumsum, arctan, arcsin, sin, cos, log, exp, array, imag, tanh, pi, sqrt, clip, zeros, ceil, ndarray
+import warnings
+from numpy import arange, cumsum, arctan, arcsin, sin, cos, log, exp, array, imag, tanh, pi, sqrt, clip, zeros, ceil, ndarray, empty as nempty
 from numpy.random import rand
 import scipy.io.wavfile
+try:
+    from ._routines import ffi, lib
+except ImportError:
+    warnings.warn("Unable to import _routines.* Run scripts/build_routines.py to speed up computation.")
+    ffi = None
+    lib = None
 # pylint: disable=invalid-name
 
 
@@ -13,6 +20,14 @@ PHI = (sqrt(5)+1)/2
 def set_sample_rate(value):
     global SAMPLE_RATE
     SAMPLE_RATE = value
+
+
+def tempty(duration):
+    return nempty(int(round(duration * SAMPLE_RATE)))
+
+
+def tzeros(duration):
+    return zeros(int(round(duration * SAMPLE_RATE)))
 
 
 def trange(duration):
@@ -132,3 +147,44 @@ def write(filename, data):
 
 def empty():
     return array([[], []])
+
+
+def sineping(frequency, decay, amplitude=1, duration=None, force_fallback=False):
+    if duration is None:
+        if decay <= EPSILON:
+            raise ValueError("Non-decaying sine ping and no duration given")
+        duration = -log(EPSILON) / decay
+    if ffi is None or force_fallback:
+        t = trange(duration)
+        return sine(frequency*t) * exp(-t*decay) * amplitude
+    result = tempty(duration)
+    result_buf = ffi.cast("double*", result.ctypes.data)
+    lib.sineping(result_buf, len(result), 2*pi*frequency/SAMPLE_RATE, exp(-decay/SAMPLE_RATE), amplitude)
+    return result
+
+
+def sinepings(frequencies, decays, amplitudes, duration=None, force_fallback=False):
+    if duration is None:
+        min_decay = float("inf")
+        for decay in decays:
+            if decay <= EPSILON:
+                raise ValueError("Non-decaying mode and no duration given")
+            if decay < min_decay:
+                min_decay = decay
+        duration = -log(EPSILON) / min_decay
+    if ffi is None or force_fallback:
+        t = trange(duration)
+        result = tzeros(duration)
+        for frequency, decay, amplitude in zip(frequencies, decays, amplitudes):
+            result += sine(frequency*t) * exp(-t*decay) * amplitude
+        return result
+    result = tzeros(duration)
+    result_buf = ffi.cast("double*", result.ctypes.data)
+    deltas = 2*pi*array(frequencies)/SAMPLE_RATE
+    deltas_buf = ffi.cast("double*", deltas.ctypes.data)
+    gammas = exp(-array(decays)/SAMPLE_RATE)
+    gammas_buf = ffi.cast("double*", gammas.ctypes.data)
+    amplitudes = array(amplitudes)
+    amplitudes_buf = ffi.cast("double*", amplitudes.ctypes.data)
+    lib.sinepings(result_buf, len(result), deltas_buf, gammas_buf, amplitudes_buf, min(len(deltas), len(gammas), len(amplitudes)))
+    return result
