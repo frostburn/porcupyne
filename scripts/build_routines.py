@@ -5,6 +5,7 @@ ffibuilder = FFI()
 ffibuilder.cdef(
     "void sineping(double *samples, size_t num_samples, double delta, double gamma, double amplitude, double phase);"
     "void sinepings(double *samples, size_t num_samples, double *deltas, double *gammas, double *amplitudes, double *phases, size_t num_pings);"
+    "void delayedpings(double *samples, size_t num_samples, double *deltas, double *gammas, double *amplitudes, double *phases, double *attacks, uint32_t *delays, size_t num_pings);"
 )
 
 ffibuilder.set_source(
@@ -35,6 +36,33 @@ ffibuilder.set_source(
                 y2 = y1;
                 y1 = y0;
                 samples[j] += y1;
+            }
+        }
+    }
+
+    void delayedpings(double *samples, size_t num_samples, double *deltas, double *gammas, double *amplitudes, double *phases, double *attacks, uint32_t *delays, size_t num_pings) {
+        double a1, a2, y0, y1, y2, e;
+        for (size_t i = 0; i < num_pings; ++i) {
+            a1 = 2*cos(deltas[i])*gammas[i];
+            a2 = -gammas[i]*gammas[i];
+            y2 = sin(phases[i]) * amplitudes[i];
+            y1 = sin(phases[i] + deltas[i]) * amplitudes[i] * gammas[i];
+            e = attacks[i];
+            if (e > 1) {
+                e = 1;
+            }
+            // samples[delays[i]] += y2 * 0;
+            samples[delays[i]+1] += y1 * e;
+            for (size_t j = delays[i]+2; j < num_samples; ++j) {
+                y0 = a1*y1 + a2*y2;
+                y2 = y1;
+                y1 = y0;
+                e += attacks[i];
+                if (e < 1) {
+                    samples[j] += y1 * e;
+                } else {
+                    samples[j] += y1;
+                }
             }
         }
     }

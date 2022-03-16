@@ -1,5 +1,5 @@
 import warnings
-from numpy import arange, cumsum, arctan, arcsin, sin, cos, log, exp, array, imag, tanh, pi, sqrt, clip, zeros, ceil, ndarray, empty as nempty, zeros_like
+from numpy import arange, cumsum, arctan, arcsin, sin, cos, log, exp, array, imag, tanh, pi, sqrt, clip, zeros, ceil, ndarray, empty as nempty, zeros_like, clip, around
 from numpy.random import rand
 import scipy.io.wavfile
 try:
@@ -183,7 +183,7 @@ def sinepings(frequencies, decays, amplitudes, phases=None, duration=None, force
     ps = []
     nyquist = SAMPLE_RATE / 2
     for f, d, a, p in zip(frequencies, decays, amplitudes, phases):
-        if abs(f) < nyquist:
+        if abs(f) <= nyquist:
             fs.append(f)
             ds.append(d)
             amps.append(a)
@@ -216,6 +216,69 @@ def sinepings(frequencies, decays, amplitudes, phases=None, duration=None, force
     lib.sinepings(
         result_buf, len(result),
         deltas_buf, gammas_buf, amplitudes_buf, phases_buf,
+        len(deltas)
+    )
+    return result
+
+
+def delayedpings(frequencies, decays, amplitudes, attacks, delays, phases=None, duration=None, force_fallback=False):
+    if phases is None:
+        phases = zeros_like(frequencies)
+    fs = []
+    ds = []
+    amps = []
+    ps = []
+    ats = []
+    dls = []
+    nyquist = SAMPLE_RATE / 2
+    two_samples = 2 / SAMPLE_RATE
+    for f, d, a, p, atc, dl in zip(frequencies, decays, amplitudes, phases, attacks, delays):
+        if abs(f) > nyquist:
+            continue
+        if dl < 0:
+            raise ValueError("Negative delay")
+        if duration is not None and dl + two_samples > duration:
+            continue
+        fs.append(f)
+        ds.append(d)
+        amps.append(a)
+        ps.append(p)
+        dls.append(dl)
+        ats.append(1/atc)
+    frequencies, decays, amplitudes, phases, attacks, delays = fs, ds, amps, ps, ats, dls
+    if duration is None:
+        duration = 0
+        beta = -log(EPSILON)
+        for decay, delay in zip(decays, delays):
+            if decay <= EPSILON:
+                raise ValueError("Non-decaying mode and no duration given")
+            dur = beta / decay + delay
+            if dur > duration:
+                duration = dur
+    if ffi is None or force_fallback:
+        t = trange(duration)
+        result = tzeros(duration)
+        for frequency, decay, amplitude, phase, delay, attack in zip(frequencies, decays, amplitudes, phases, delays, attacks):
+            x = t - delay
+            result += sine(phase + frequency*x) * exp(-x*decay) * amplitude * clip(x*attack, 0, 1)
+        return result
+    result = tzeros(duration)
+    result_buf = ffi.cast("double*", result.ctypes.data)
+    deltas = 2*pi*array(frequencies)/SAMPLE_RATE
+    deltas_buf = ffi.cast("double*", deltas.ctypes.data)
+    gammas = exp(-array(decays)/SAMPLE_RATE)
+    gammas_buf = ffi.cast("double*", gammas.ctypes.data)
+    amplitudes = array(amplitudes)
+    amplitudes_buf = ffi.cast("double*", amplitudes.ctypes.data)
+    phases = 2*pi*array(phases)
+    phases_buf = ffi.cast("double*", phases.ctypes.data)
+    attacks = array(attacks) / SAMPLE_RATE
+    attacks_buf = ffi.cast("double*", attacks.ctypes.data)
+    delays = around(SAMPLE_RATE * array(delays)).astype("uint32")
+    delays_buf = ffi.cast("uint32_t*", delays.ctypes.data)
+    lib.delayedpings(
+        result_buf, len(result),
+        deltas_buf, gammas_buf, amplitudes_buf, phases_buf, attacks_buf, delays_buf,
         len(deltas)
     )
     return result

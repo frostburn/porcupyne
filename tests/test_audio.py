@@ -1,5 +1,5 @@
-from numpy import isclose
-from porcupyne.audio import sineping, sinepings, ffi
+from numpy import isclose, array, around
+from porcupyne.audio import sineping, sinepings, delayedpings, ffi, get_sample_rate
 
 
 def test_sineping():
@@ -16,6 +16,15 @@ def test_sinepings():
     assert isclose(y0, y1).all()
 
 
+def test_delayedpings():
+    assert ffi is not None
+    srate = get_sample_rate()
+    delays = around(array([0.01, 0.02]) * srate) / srate
+    y0 = delayedpings([100, 111], [100, 200], [0.9, 0.7], [0.01, 0.02], delays, [0.1, 0.2])
+    y1 = delayedpings([100, 111], [100, 200], [0.9, 0.7], [0.01, 0.02], delays, [0.1, 0.2], force_fallback=True)
+    assert isclose(y0, y1).all()
+
 if __name__ == '__main__':
     test_sineping()
     test_sinepings()
+    test_delayedpings()
