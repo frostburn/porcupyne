@@ -64,7 +64,7 @@ class Snare(Percussion):
         return [result, result]
 
 
-class HiHat(Percussion):
+class HiHatClosed(Percussion):
     # TODO: Better noise spectra
     def __init__(self, omega0=2100, omega1=4768, omega2=2880, mod1=4.3, mod2=40.5, mod_decay=10, metal_decay=30, metal_amp=0.9, pink_decay=25, pink_amp=0.3, white_decay=45, white_amp=1.2):
         self.omega0 = omega0
@@ -93,6 +93,16 @@ class HiHat(Percussion):
         result = tanh(signal*velocity)*tanh(t*400)*0.5
         result[1:] += result[:-1]  # Minor low-pass
         return [result, result]
+
+
+class HiHatPedal(HiHatClosed):
+    def __init__(self, omega0=2100, omega1=4768, omega2=2880, mod1=4.3, mod2=37.5, mod_decay=11, metal_decay=31, metal_amp=0.9, pink_decay=20, pink_amp=0.5, white_decay=50, white_amp=1.0):
+        super().__init__(omega0, omega1, omega2, mod1, mod2, mod_decay, metal_decay, metal_amp, pink_decay, pink_amp, white_decay, white_amp)
+
+
+class HiHatOpen(HiHatClosed):
+    def __init__(self, omega0=2100, omega1=4768, omega2=2880, mod1=4.3, mod2=35.5, mod_decay=8, metal_decay=18, metal_amp=0.9, pink_decay=25, pink_amp=0.3, white_decay=15, white_amp=1.5):
+        super().__init__(omega0, omega1, omega2, mod1, mod2, mod_decay, metal_decay, metal_amp, pink_decay, pink_amp, white_decay, white_amp)
 
 
 class Kick(Percussion):
@@ -134,9 +144,17 @@ if __name__ == '__main__':
         snare = Snare().play(1)
         write(path / "snare.wav", snare[0])
 
-    if name is None or name == "hihat":
-        hihat = HiHat().play(1)
-        write(path / "hihat.wav", hihat[0])
+    if name is None or name == "hihat_closed":
+        hihat = HiHatClosed().play(1)
+        write(path / "hihat_closed.wav", hihat[0])
+
+    if name is None or name == "hihat_pedal":
+        hihat = HiHatPedal().play(1)
+        write(path / "hihat_pedal.wav", hihat[0])
+
+    if name is None or name == "hihat_open":
+        hihat = HiHatOpen().play(1)
+        write(path / "hihat_open.wav", hihat[0])
 
     if name is None or name == "kick":
         kick = Kick().play(1)
