@@ -10,9 +10,15 @@ parser.add_argument('--low', type=float, default=15.0)
 parser.add_argument('--high', type=float, default=1000.0)
 parser.add_argument('--tlow', type=float, default=-0.05)
 parser.add_argument('--thigh', type=float)
+parser.add_argument('--channel', type=str, default="mixed")
 args = parser.parse_args()
 
 sample_rate, data = scipy.io.wavfile.read(args.infile)
+
+if len(data.shape) > 1:
+    if args.channel != "mixed":
+        raise ValueError("Unsupported channel mode")
+    data = data.sum(axis=1)
 
 data = data / abs(data).max()
 
