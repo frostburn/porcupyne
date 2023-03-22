@@ -46,7 +46,7 @@ def make_video_frame(rgb, dither=1.0/256.0):
     """
     # Videos usually don't use rgb pixel format so technically dithering should be done for chroma and luma separately,
     # but that would require writing a new plugin for imageio. Dithering here does help a little though.
-    frame = make_video_frame(rgb, dither)
+    frame = make_picture_frame(rgb, dither)
     return (frame * 255).astype(uint8)
 
 
